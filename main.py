@@ -1,3 +1,9 @@
+import os
+from MayaRenameTool.mainGui import create_gui
+
 def main():
-    print("Hello world")
+    create_gui()
+
+
+
 
