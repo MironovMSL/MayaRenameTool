@@ -165,32 +165,9 @@ class Buttons_lib_name(QtWidgets.QPushButton):
     def __init__(self, text= ""):
         super(Buttons_lib_name, self).__init__()
 
-        self.Style_btn = """
-                    QPushButton {
-                    background-color: rgb(3, 100, 89);
-                    border-style: outset;
-                    border-width: 1px;
-                    border-radius: 5px;
-                    border-color: rgb(50, 50, 50);
-                    font: bold 14px;
-
-
-                    font: 10pt, Arial;
-                    color: rgb(255, 255, 255);}
-                    QPushButton:hover{
-
-                    border-color: beige;
-                    background-color: rgb(3, 65, 89);	
-                    }
-                    QPushButton:pressed {
-                    background-color: rgb(224, 0, 0);
-                    border-style: inset;}
-                    """
-
         self._text = text
         self.setObjectName(self._text)
         self.setFixedSize(60, 20)
-        self.setStyleSheet(self.Style_btn)
         self.setText(self._text)
 
         # LineEdit setVisible = 0
@@ -292,8 +269,8 @@ class Buttons_fast_name(Buttons_lib_name):
     def __init__(self, text= ""):
         super(Buttons_fast_name, self).__init__(text)
 
-        self.setFixedSize(50, 25)
-        self.NameLineEdit.setFixedSize(50, 25)
+        self.setFixedSize(40, 25)
+        self.NameLineEdit.setFixedSize(40, 25)
 
     def creat_context_menu(self):
 
@@ -409,32 +386,32 @@ class Search_BTN(QtWidgets.QPushButton):
     def __init__(self):
         super(Search_BTN, self).__init__()
 
-        self.Style_btn = """
-                            QPushButton {
-                            background-color: rgb(3, 100, 89);
-                            border-style: outset;
-                            border-width: 1px;
-                            border-radius: 5px;
-                            border-color: rgb(50, 50, 50);
-                            font: bold 14px;
-
-
-                            font: 10pt, Arial;
-                            color: rgb(255, 255, 255);}
-                            QPushButton:hover{
-
-                            border-color: beige;
-                            background-color: rgb(3, 65, 89);	
-                            }
-                            QPushButton:pressed {
-                            background-color: rgb(224, 0, 0);
-                            border-style: inset;}
-                            """
+        # self.Style_btn = """
+        #                     QPushButton {
+        #                     background-color: rgb(3, 100, 89);
+        #                     border-style: outset;
+        #                     border-width: 1px;
+        #                     border-radius: 5px;
+        #                     border-color: rgb(50, 50, 50);
+        #                     font: bold 14px;
+        #
+        #
+        #                     font: 10pt, Arial;
+        #                     color: rgb(255, 255, 255);}
+        #                     QPushButton:hover{
+        #
+        #                     border-color: beige;
+        #                     background-color: rgb(3, 65, 89);
+        #                     }
+        #                     QPushButton:pressed {
+        #                     background-color: rgb(224, 0, 0);
+        #                     border-style: inset;}
+        #                     """
         self.setObjectName("SearchNameID")
-        self.setStyleSheet(self.Style_btn)
+        # self.setStyleSheet(self.Style_btn)
 
-        self.setFixedSize(30, 30)
-        self.setIcon(QtGui.QIcon("D:/MironovS/Test_script/feather/search.svg"))
+        self.setFixedSize(25, 25)
+        self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/search.svg")))
         self.CreatContextMenu()
 
     def enterEvent(self,event):
@@ -451,7 +428,7 @@ class Search_BTN(QtWidgets.QPushButton):
         if event.buttons() == QtCore.Qt.RightButton:
 
             self.popMenu.exec_(self.mapToGlobal(event.pos()))
-            self.setStyleSheet(self.Style_btn)
+            # self.setStyleSheet(self.Style_btn)
 
     def CreatContextMenu(self):
 
@@ -497,32 +474,32 @@ class Replace_BTN(QtWidgets.QPushButton):
     def __init__(self):
         super(Replace_BTN, self).__init__()
 
-        self.Style_btn = """
-                            QPushButton {
-                            background-color: rgb(3, 100, 89);
-                            border-style: outset;
-                            border-width: 1px;
-                            border-radius: 5px;
-                            border-color: rgb(50, 50, 50);
-                            font: bold 14px;
-
-
-                            font: 10pt, Arial;
-                            color: rgb(255, 255, 255);}
-                            QPushButton:hover{
-
-                            border-color: beige;
-                            background-color: rgb(3, 65, 89);	
-                            }
-                            QPushButton:pressed {
-                            background-color: rgb(224, 0, 0);
-                            border-style: inset;}
-                            """
+        # self.Style_btn = """
+        #                     QPushButton {
+        #                     background-color: rgb(3, 100, 89);
+        #                     border-style: outset;
+        #                     border-width: 1px;
+        #                     border-radius: 5px;
+        #                     border-color: rgb(50, 50, 50);
+        #                     font: bold 14px;
+        #
+        #
+        #                     font: 10pt, Arial;
+        #                     color: rgb(255, 255, 255);}
+        #                     QPushButton:hover{
+        #
+        #                     border-color: beige;
+        #                     background-color: rgb(3, 65, 89);
+        #                     }
+        #                     QPushButton:pressed {
+        #                     background-color: rgb(224, 0, 0);
+        #                     border-style: inset;}
+        #                     """
         self.setObjectName("ReplaceNameID")
-        self.setStyleSheet(self.Style_btn)
+        # self.setStyleSheet(self.Style_btn)
 
-        self.setFixedSize(30, 30)
-        self.setIcon(QtGui.QIcon("D:/MironovS/Test_script/feather/repeat.svg"))
+        self.setFixedSize(25, 25)
+        self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/repeat.svg")))
         self.CreatContextMenu()
 
     def enterEvent(self,event):
@@ -539,7 +516,7 @@ class Replace_BTN(QtWidgets.QPushButton):
         if event.buttons() == QtCore.Qt.RightButton:
 
             self.popMenu.exec_(self.mapToGlobal(event.pos()))
-            self.setStyleSheet(self.Style_btn)
+            # self.setStyleSheet(self.Style_btn)
 
     def CreatContextMenu(self):
 
@@ -636,31 +613,45 @@ class MyScrollArea(QtWidgets.QScrollArea):
 
     def __init__(self, key = None, OriLayout = QtWidgets.QHBoxLayout()):
         super(MyScrollArea, self).__init__()
-        self.key = key
 
+        self.key = key
         self.index = int
 
-        # scroll area
+        scroll_style = """QScrollBar:horizontal {
+                            background: rgb(10, 10, 10);
+                            height: 5px;
+                            margin: 0px 0 0 0px;
+                        }
+                        QScrollBar::handle:horizontal {
+                            border: 1px rgb(0,0,0);
+                            background: rgb(80, 80, 80);
+                        }
+                        """
         self.setObjectName("fast_access")
 
-        # self.setFixedWidth(300)
-        self.setFixedHeight(30)
+        self.setFixedWidth(250)
+
         self.setWidgetResizable(True)
         self.setAcceptDrops(True)
 
         self.setFocusPolicy(QtCore.Qt.NoFocus)
         self.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        # self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+
+        self.scrollbar = QtWidgets.QScrollBar()
+        self.scrollbar.setStyleSheet(scroll_style)
+        self.setHorizontalScrollBar(self.scrollbar)
+
 
         self.scroll_area_widget = QtWidgets.QWidget()
         self.setWidget(self.scroll_area_widget)
-        self.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
+
 
         self.scroll_area_widget_layout = OriLayout
         self.scroll_area_widget_layout.setAlignment(QtCore.Qt.AlignTop)
-        self.scroll_area_widget_layout.setContentsMargins(3, 3, 3, 3)
-        self.scroll_area_widget_layout.setSpacing(5)
+        self.scroll_area_widget_layout.setContentsMargins(0, 0, 0, 0)
+        self.scroll_area_widget_layout.setSpacing(2)
 
         self.scroll_area_widget.setLayout(self.scroll_area_widget_layout)
 
@@ -668,9 +659,8 @@ class MyScrollArea(QtWidgets.QScrollArea):
 
     def Add_Buttons(self):
         self.json_data = get_json_data()
-        self.Separator = Separator_BTN(50, 25)
+        self.Separator = Separator_BTN(40, 25)
         self.scroll_area_widget_layout.addWidget(self.Separator)
-
 
         for i in self.json_data[self.key]:
             self.fast_access_BTN = Buttons_fast_name(i)
@@ -1433,7 +1423,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
         self.setObjectName("MSL_RenameToolID")
         self.setWindowTitle('MSL Rename Tool')
-        self.setFixedSize(300, 200)
+        self.setFixedSize(268, 165)
         # self.setWindowIcon(QtGui.QIcon(os.path.join(root_, "icons/tool.svg")))
 
         self.main_layout = QtWidgets.QVBoxLayout()
@@ -1498,24 +1488,23 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
         # 4. List Name content
         self.listName_content_frame = QtWidgets.QFrame()
-        self.listName_content_frame.setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(10, 58, 64, 241), stop:0.602273 rgba(4, 35, 38, 239));border-radius:10px;")
-        self.listName_content_frame.setFixedHeight(fixHeigt)
+        self.listName_content_frame.setFixedHeight(fixHeigt+5)
         self.listName_content_frame.setFrameShape(QtWidgets.QFrame.NoFrame)
 
         self.listName_content_layout = QtWidgets.QHBoxLayout(self.listName_content_frame)
         self.listName_content_layout.setContentsMargins(0, 0, 0, 0)
-        self.listName_content_layout.setSpacing(0)
-
+        self.listName_content_layout.setSpacing(2)
+        self.SetupUI_ListName_content()
 
         # 5. Search Replace content
         self.SearchReplace_content_frame = QtWidgets.QFrame()
-        self.SearchReplace_content_frame.setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(10, 58, 64, 241), stop:0.602273 rgba(4, 35, 38, 239));border-radius:10px;")
         self.SearchReplace_content_frame.setFixedHeight(fixHeigt)
         self.SearchReplace_content_frame.setFrameShape(QtWidgets.QFrame.NoFrame)
 
         self.SearchReplace_content_layout = QtWidgets.QHBoxLayout(self.SearchReplace_content_frame)
         self.SearchReplace_content_layout.setContentsMargins(0, 0, 0, 0)
-        self.SearchReplace_content_layout.setSpacing(0)
+        self.SearchReplace_content_layout.setSpacing(2)
+        self.SetupUI_SearchReplace_content()
 
         # add Widget
         self.main_layout.addWidget(self.Rename_content_frame)
@@ -1632,6 +1621,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         # Lib Name
         self.LibName_menu_Act = QtWidgets.QAction(QtGui.QIcon(QtGui.QIcon(os.path.join(root_, "icons/book.svg"))), "Book", self)
         self.LibName_menu = self.menuBar.addAction(self.LibName_menu_Act)
+        self.LibName_menu_Act.setCheckable(True)
         self.LibName_menu_Act.triggered.connect(self.libNameUI)
 
     def SetupUI_Rename_content(self):
@@ -1673,13 +1663,13 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.number_start.setPrefix("Start: ")
         self.number_start.setValue(1)
         self.number_start.setRange(0, 100)
-        self.number_start.setFixedWidth(68)
+        self.number_start.setFixedSize(68, 25)
 
         self.number_padding = QtWidgets.QSpinBox()
         self.number_padding.setPrefix("Padding: ")
         self.number_padding.setValue(2)
         self.number_padding.setRange(1, 9)
-        self.number_padding.setFixedWidth(82)
+        self.number_padding.setFixedSize(82, 25)
 
         self.index_slider = QtWidgets.QSlider()
         self.index_slider.setOrientation(QtCore.Qt.Horizontal)
@@ -1704,7 +1694,8 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
     def SetupUI_PreSuf_content(self):
 
-        self.state_prefix_suffix_CheckBox = QtWidgets.QCheckBox() # Delet remoove in setting
+        self.state_prefix_suffix_CheckBox = QtWidgets.QCheckBox()
+        self.state_prefix_suffix_CheckBox.setFixedWidth(13)
         self.state_prefix_suffix_CheckBox.setChecked(True)
         self.state_prefix_suffix_CheckBox.toggled.connect(self.get_state_prefix_suffix)
 
@@ -1714,12 +1705,12 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.prefix_add_btn.clicked.connect(self.prefix_add)
 
         self.prefix_Editline = DropLineEdit("prefix_")
-        self.prefix_Editline.setFixedWidth(113)
+        self.prefix_Editline.setFixedWidth(97)
         self.prefix_Editline.itDropName.connect(self.prefix_suffix_edited)
         self.prefix_Editline.textEdited.connect(self.prefix_suffix_edited)
 
         self.suffix_Editline = DropLineEdit("_suffix")
-        self.suffix_Editline.setFixedWidth(113)
+        self.suffix_Editline.setFixedWidth(97)
         self.suffix_Editline.itDropName.connect(self.prefix_suffix_edited)
         self.suffix_Editline.textEdited.connect(self.prefix_suffix_edited)
 
@@ -1738,43 +1729,114 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
         self.CheckBox_btn_in_text = QtWidgets.QCheckBox()
         self.CheckBox_btn_in_text.setChecked(True)
+        self.CheckBox_btn_in_text.setFixedWidth(13)
         self.CheckBox_btn_in_text.toggled.connect(self.in_text_field)
 
-        #  scroll area
         self.scroll_area_list_content_BTN = MyScrollArea(key="fast_access")
+        self.scroll_area_list_content_BTN.setFixedWidth(250)
         self.scroll_area_list_content_BTN.itClickedName.connect(self.receiveSignal)
 
+        self.listName_content_layout.addWidget(self.CheckBox_btn_in_text)
+        self.listName_content_layout.addWidget(self.scroll_area_list_content_BTN)
 
-        self.left_list_content_btn_Layout.addWidget(self.CheckBox_btn_in_text)
-        self.left_list_content_btn_Layout.addWidget(self.scroll_area_list_content_BTN)
-        #
-        # self.json_file_path_ButtonsName = "D:/MironovS/Test_script/TestUI/listButtonsName.json"
-        #
-        # self.json_data = None
-        # with open(self.json_file_path_ButtonsName, "r") as inFile:
-        #     self.json_data = json.load(inFile)
-        # for  i in self.json_data["fast_access"]:
-        #
-        #     self.standart_BTN = Buttons_fast_name(i)
-        #     self.scroll_layout_left_list_content_BTN.addWidget(self.standart_BTN)
-        #     self.standart_BTN.itClickedName.connect(self.receiveSignal)
+    def SetupUI_SearchReplace_content(self):
 
-        self.Edit_BTN = QtWidgets.QPushButton()
-        self.Edit_BTN.setIcon(QtGui.QIcon("D:/MironovS/Test_script/feather/file-plus.svg"))
-        self.right_left_list_content_btn_Layout.addWidget(self.Edit_BTN)
-        self.Edit_BTN.setStyleSheet(Style_btn)
-        self.Edit_BTN.setFixedSize(30, 30)
-
-        self.right_left_list_content_btn_Layout.setAlignment(self.Edit_BTN, QtCore.Qt.AlignRight)
-
-        self.Edit_BTN.clicked.connect(self.libNameUI)
+        self.Search_and_Replace_checkbox = QtWidgets.QCheckBox()
+        self.Search_and_Replace_checkbox.setFixedWidth(13)
+        self.Search_and_Replace_checkbox.toggled.connect(self.emitSelandReplace)
 
 
+        self.search_BTN = Search_BTN()
+        self.search_BTN.isEmitState.connect(self.emitState_Search_Replace)
+        self.search_BTN.clicked.connect(self.Search)
+
+        self.search_Field = DropLineEdit("Search")
+        self.search_Field.setFixedWidth(97)
+
+        self.replace_Field = DropLineEdit("Replace")
+        self.replace_Field.setFixedWidth(97)
+
+        self.replace_BTN = Replace_BTN()
+        self.replace_BTN.isEmitState.connect(self.emitState_Search_Replace)
+        self.replace_BTN.clicked.connect(self.Replace)
+
+        self.SearchReplace_content_layout.addWidget(self.Search_and_Replace_checkbox)
+        self.SearchReplace_content_layout.addWidget(self.search_BTN)
+        self.SearchReplace_content_layout.addWidget(self.search_Field)
+        self.SearchReplace_content_layout.addWidget(self.replace_Field)
+        self.SearchReplace_content_layout.addWidget(self.replace_BTN)
+
+    def get_ListLongName_Search_Replace(self):
+
+        SearchName = self.search_Field.text()
+
+        if self.Edit_sub_S_and_R_Sel.isChecked():
+            state = "Selected"
+            ListLongName = cmds.ls(sl=1, l=1)
+
+        elif self.Edit_sub_S_and_R_Hi.isChecked():
+            state = "Hierarchy"
+            ListLong_Sel  = cmds.ls(sl=1, l=1)
+            ListLong_Hi   = cmds.ls(sl=1, dag=1, l=1)
+            ListLong_Hi.extend(ListLong_Sel)
+            ListLongName  = set(ListLong_Hi)
+
+        elif self.Edit_sub_S_and_R_All.isChecked():
+            state = "All"
+            ListLongName = cmds.ls()
+
+        ListSearchName = []
+
+        if SearchName:
+            for i in ListLongName:
+                shortName = self.get_short_Name(i)
+                if SearchName in shortName:
+                    ListSearchName.append(i)
+
+        return ListSearchName, state, SearchName
 
 
 
+    def Replace(self):
 
+        ReplaceName = self.replace_Field.text()
+        ListSearchName, state, SearchName = self.get_ListLongName_Search_Replace()
+        sortName = sorted(ListSearchName, key=len, reverse=True)
 
+        if ReplaceName:
+            for i in sortName:
+
+                shortName    = self.get_short_Name(i)
+                NewshortName = shortName.replace(SearchName, ReplaceName, 1)
+                cmds.rename(i, NewshortName)
+
+        print("Replace '{}' with '{}' in {} names: {}".format(SearchName, ReplaceName, len(ListSearchName), state))
+
+    def Search(self):
+
+        ListSearchName, state, SearchName = self.get_ListLongName_Search_Replace()
+
+        cmds.select(ListSearchName)
+        print("Search '{}' in {} names: {}".format(SearchName,len(ListSearchName),state))
+
+    def emitSelandReplace(self, state):
+
+        if state:
+            self.emitSearchHierarchy()
+
+        else:
+            self.emitSearchSelected()
+
+    def emitState_Search_Replace(self, state):
+
+        if state == "Selected":
+            self.emitSearchSelected()
+
+        elif state == "Hierarchy":
+            self.emitSearchHierarchy()
+
+        elif state == "All":
+            self.emitSearchAll()
     def in_text_field(self,state):
 
         if state:
@@ -2223,6 +2285,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
     def state_number(self, state):
 
+        self.number_start.setReadOnly(state)
         self.Edit_menu_Number.setChecked(state)
 
         Number      = self.NumberText
@@ -2235,9 +2298,14 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         cursor_pos  = self.cursor_pos
 
         if state:
+            self.number_start.setReadOnly(False)
+            self.number_padding.setReadOnly(False)
+            self.index_SpinBox.setReadOnly(False)
+
             if cursor_pos in range(start,len(name)+1):
                 cursor_pos += len(Number)
                 # print("+",cursor_pos)
+
 
             right_text = name[start:]
             name_number = left_text + Number + right_text
@@ -2250,6 +2318,9 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
                 self.oldTextLine = name_number
 
         else:
+            self.number_start.setReadOnly(True)
+            self.number_padding.setReadOnly(True)
+            self.index_SpinBox.setReadOnly(True)
             if cursor_pos in range(end,len(name) +1):
                 cursor_pos -= len(Number)
                 # print("-",cursor_pos)
@@ -2263,20 +2334,20 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
                 self.oldTextLine = name_no_number
 
-        Height = self.Rename_number_spinBox_Widgets.height()
-
-        if self.AnimCheckBox.isChecked():
-
-            new_Height = 30
-        else:
-
-            new_Height = 0
-
-        self.animation = QtCore.QPropertyAnimation(self.Rename_number_spinBox_Widgets, b"maximumHeight")
-        self.animation.setDuration(150)
-        self.animation.setStartValue(Height)
-        self.animation.setEndValue(new_Height)
-        self.animation.start()
+        # Height = self.Number_content_frame.height()
+        #
+        # if self.AnimCheckBox.isChecked():
+        #
+        #     new_Height = 30
+        # else:
+        #
+        #     new_Height = 0
+        #
+        # self.animation = QtCore.QPropertyAnimation(self.Number_content_frame, b"maximumHeight")
+        # self.animation.setDuration(150)
+        # self.animation.setStartValue(Height)
+        # self.animation.setEndValue(new_Height)
+        # self.animation.start()
 
     def prefix_suffix_edited(self, text):
 
@@ -2521,9 +2592,23 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.search_BTN.popMenu_All.setChecked(True)
         self.replace_BTN.popMenu_All.setChecked(True)
 
-
     def libNameUI(self):
-        print("Hello")
+        if cmds.window("libNameID", exists=1):
+            cmds.deleteUI("libNameID")
+
+        if cmds.windowPref("libNameID", exists=1):
+            cmds.windowPref("libNameID", remove=1)
+
+        self.libName = LibraryName()
+        self.libName.show()
+        cmds.window("libNameID", e=1, titleBar=1, toolbox=1, )
+
+        posX = self.geometry().left() + self.geometry().width()
+        posY = self.y()
+        self.libName.move(posX, posY)
+
+
+        self.libName.itClickedName.connect(self.receiveSignal)
 
     def receiveSignal(self,text):
 
@@ -2578,6 +2663,12 @@ def create_gui():
 
     if cmds.windowPref("MSL_RenameToolID", exists=1):
         cmds.windowPref("MSL_RenameToolID", remove=1)
+
+    if cmds.window("libNameID", exists=1):
+        cmds.deleteUI("libNameID")
+
+    if cmds.windowPref("libNameID", exists=1):
+        cmds.windowPref("libNameID", remove=1)
 
     global Dialog
     Dialog = MSL_RenameTool()
