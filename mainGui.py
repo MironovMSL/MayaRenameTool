@@ -6,7 +6,6 @@ import re
 import json
 
 root_ = os.path.dirname(__file__)
-listButtonsName_path_ = os.path.join(root_, "listButtonsName.json")
 
 class NameMIMEData(QtCore.QMimeData):
     def __init__(self, text=None):
@@ -21,35 +20,13 @@ class DropLineEdit(QtWidgets.QLineEdit):
     def __init__(self, NameHolder = None):
         super(DropLineEdit, self).__init__()
 
-        # Style_lineEdit = """
-        #                         QLineEdit{
-        #                         background-color: rgb(3, 65, 89);
-        #                         border: 2px solid rgb(2, 89, 81);
-        #                         border-radius: 10px;
-        #                         padding: 0 4px;
-        #                         color: rgb(85, 255, 255);
-        #                         selection-background-color:  rgb(10, 58, 64);
-        #                         selection-color:rgb(255, 255, 255);}
-        #
-        #                         QLineEdit:hover{
-        #                         border: 2px solid rgb(2, 108, 97);}
-        #                         QLineEdit:focus{
-        #                         color: rgb(255, 203, 233);
-        #                         border: 2px solid rgba(2, 89, 255, 100);
-        #                         background-color: rgb(4, 102, 138);}
-        #                         QLineEdit:hover:focus{
-        #                         color: rgb(255, 203, 233);
-        #                         border: 2px solid rgba(2, 89, 255, 255);}
-        #                         """
         self.setAcceptDrops(True)
         self.setPlaceholderText(NameHolder)
         self.setFixedSize(120, 25)
-        # self.setMaximumSize(120, 30)
         self.setClearButtonEnabled(True)
         self.setDragEnabled(True)
         self.setFont(QtGui.QFont("Arial", 10, QtGui.QFont.Normal))
         self.setAlignment(QtCore.Qt.AlignLeft)
-        # self.setStyleSheet(Style_lineEdit)
 
         self.oldCursor = self.cursorPosition()
         self.oldMineData = ""
@@ -158,6 +135,88 @@ class Separator_BTN(QtWidgets.QPushButton):
         self.setPalette(self.p)
         self.setFixedSize(Width,Height)
         self.setStyleSheet(self.Style_btn)
+class Rename_BTN(QtWidgets.QPushButton):
+    isEmitStateRename = QtCore.Signal(str, bool)
+    def __init__(self):
+        super(Rename_BTN, self).__init__()
+
+        self.setObjectName("RenameID")
+        self.setFixedSize(50, 25)
+        self.setText("Rename")
+        self.creat_context_menu()
+
+    def enterEvent(self,event):
+        self.setCursor(QtCore.Qt.PointingHandCursor)
+        super(Rename_BTN, self).enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.setCursor(QtCore.Qt.ArrowCursor)
+        super(Rename_BTN, self).leaveEvent(event)
+
+    def mousePressEvent(self, event):
+        super(Rename_BTN, self).mousePressEvent(event)
+
+        if event.buttons() == QtCore.Qt.RightButton:
+            self.popMenu.exec_(self.mapToGlobal(event.pos()))
+
+    def creat_context_menu(self):
+        self.popMenu = QtWidgets.QMenu(self)
+        self.popMenu.setTearOffEnabled(True)
+        self.popMenu.setTitle("Rename")
+
+        # Preff Suffix
+        self.popMenu_PrefSuf = QtWidgets.QAction("prefix suffix in text field", self)
+        self.popMenu_PrefSuf.setCheckable(True)
+        # self.popMenu_PrefSuf.setChecked(True)
+        self.popMenu.addAction(self.popMenu_PrefSuf)
+        self.popMenu_PrefSuf.triggered.connect(self.Pref_Suf_State)
+
+        # Separator Buttons
+        # self.popMenu.addSeparator()
+        self.separator_Buttons = QtWidgets.QAction("Buttons", self)
+        self.separator_Buttons.setSeparator(True)
+        self.separator_Buttons.priority()
+        self.popMenu.addAction(self.separator_Buttons)
+
+        # in Text
+        self.popMenu_InText_sub = QtWidgets.QAction("in text field", self)
+        self.popMenu_InText_sub.setCheckable(True)
+        # self.popMenu_InText_sub.setChecked(True)
+        self.popMenu.addAction(self.popMenu_InText_sub)
+        self.popMenu_InText_sub.triggered.connect(self.State_in_text_field)
+
+        # in Selection object
+        self.popMenu_Object_sub = QtWidgets.QAction("in Selected object", self)
+        self.popMenu_Object_sub.setCheckable(True)
+        self.popMenu_Object_sub.setChecked(True)
+        self.popMenu.addAction(self.popMenu_Object_sub)
+        self.popMenu_Object_sub.triggered.connect(self.State_in_Selected_object)
+
+        self.action_group_Buttons = QtWidgets.QActionGroup(self)
+
+        self.action_group_Buttons.addAction(self.popMenu_InText_sub)
+        self.action_group_Buttons.addAction(self.popMenu_Object_sub)
+
+        # separator
+        self.popMenu.addSeparator()
+        # Number
+        self.popMenu_Number = QtWidgets.QAction("Number", self)
+        self.popMenu_Number.setCheckable(True)
+        # self.popMenu_Number.setChecked(True)
+        self.popMenu.addAction(self.popMenu_Number)
+        self.popMenu_Number.triggered.connect(self.Number_state)
+
+    def Pref_Suf_State(self, state):
+        self.isEmitStateRename.emit("Pref_Suff", state )
+
+    def State_in_text_field(self, state):
+        self.isEmitStateRename.emit("text_field",state)
+
+    def State_in_Selected_object(self, state):
+        self.isEmitStateRename.emit("Selected_object", state)
+
+    def Number_state(self, state):
+        self.isEmitStateRename.emit("Number", state)
 
 class Buttons_lib_name(QtWidgets.QPushButton):
     itClickedName = QtCore.Signal(str)
@@ -170,7 +229,7 @@ class Buttons_lib_name(QtWidgets.QPushButton):
         self.setFixedSize(60, 20)
         self.setText(self._text)
 
-        # LineEdit setVisible = 0
+        # LineEdit setVisible
         self.NameLineEdit = QtWidgets.QLineEdit()
         self.NameLineEdit.setText(self._text)
         self.NameLineEdit.setAlignment(QtCore.Qt.AlignHCenter)
@@ -188,11 +247,14 @@ class Buttons_lib_name(QtWidgets.QPushButton):
 
     def setNewMame (self):
 
-        text = self.NameLineEdit.text()
+        btnText = self.text()
+        text    = self.NameLineEdit.text()
         self.setText(text)
 
+
         self.Rename_bnt()
-        self.setStyleSheet(self.Style_btn)
+
+        print("Rename button [{}] in [{}]".format( btnText, text ))
 
     def enterEvent(self,event):
         self.setCursor(QtCore.Qt.PointingHandCursor)
@@ -213,7 +275,7 @@ class Buttons_lib_name(QtWidgets.QPushButton):
 
             self.creat_context_menu()
             self.popMenu.exec_(self.mapToGlobal(event.pos()))
-            self.setStyleSheet(self.Style_btn)
+
 
         if event.buttons() != QtCore.Qt.MidButton:
             return
@@ -262,7 +324,7 @@ class Buttons_lib_name(QtWidgets.QPushButton):
 
     def Delete_btn(self):
         self.deleteLater()
-        print(self.text(),"Delete")
+        print("Delete button [{}]".format(self.text()))
 
 class Buttons_fast_name(Buttons_lib_name):
 
@@ -295,7 +357,7 @@ class Buttons_lib_category(Buttons_lib_name):
 
         self.Style_btn2 = """
                                           QPushButton {
-                                          background-color: rgb(113, 113, 113);
+                                          background-color: rgb(100, 100, 89);
                                           border-style: outset;
                                           border-width: 1px;
                                           border-radius: 5px;
@@ -386,30 +448,7 @@ class Search_BTN(QtWidgets.QPushButton):
     def __init__(self):
         super(Search_BTN, self).__init__()
 
-        # self.Style_btn = """
-        #                     QPushButton {
-        #                     background-color: rgb(3, 100, 89);
-        #                     border-style: outset;
-        #                     border-width: 1px;
-        #                     border-radius: 5px;
-        #                     border-color: rgb(50, 50, 50);
-        #                     font: bold 14px;
-        #
-        #
-        #                     font: 10pt, Arial;
-        #                     color: rgb(255, 255, 255);}
-        #                     QPushButton:hover{
-        #
-        #                     border-color: beige;
-        #                     background-color: rgb(3, 65, 89);
-        #                     }
-        #                     QPushButton:pressed {
-        #                     background-color: rgb(224, 0, 0);
-        #                     border-style: inset;}
-        #                     """
         self.setObjectName("SearchNameID")
-        # self.setStyleSheet(self.Style_btn)
-
         self.setFixedSize(25, 25)
         self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/search.svg")))
         self.CreatContextMenu()
@@ -433,7 +472,7 @@ class Search_BTN(QtWidgets.QPushButton):
     def CreatContextMenu(self):
 
         self.popMenu = QtWidgets.QMenu(self)
-        self.popMenu.setTearOffEnabled(True)
+        # self.popMenu.setTearOffEnabled(True)
         self.popMenu.setTitle("Replace state")
 
         self.popMenu_Selected = QtWidgets.QAction("Selected", self)
@@ -474,30 +513,7 @@ class Replace_BTN(QtWidgets.QPushButton):
     def __init__(self):
         super(Replace_BTN, self).__init__()
 
-        # self.Style_btn = """
-        #                     QPushButton {
-        #                     background-color: rgb(3, 100, 89);
-        #                     border-style: outset;
-        #                     border-width: 1px;
-        #                     border-radius: 5px;
-        #                     border-color: rgb(50, 50, 50);
-        #                     font: bold 14px;
-        #
-        #
-        #                     font: 10pt, Arial;
-        #                     color: rgb(255, 255, 255);}
-        #                     QPushButton:hover{
-        #
-        #                     border-color: beige;
-        #                     background-color: rgb(3, 65, 89);
-        #                     }
-        #                     QPushButton:pressed {
-        #                     background-color: rgb(224, 0, 0);
-        #                     border-style: inset;}
-        #                     """
         self.setObjectName("ReplaceNameID")
-        # self.setStyleSheet(self.Style_btn)
-
         self.setFixedSize(25, 25)
         self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/repeat.svg")))
         self.CreatContextMenu()
@@ -521,7 +537,7 @@ class Replace_BTN(QtWidgets.QPushButton):
     def CreatContextMenu(self):
 
         self.popMenu = QtWidgets.QMenu(self)
-        self.popMenu.setTearOffEnabled(True)
+        # self.popMenu.setTearOffEnabled(True)
         self.popMenu.setTitle("Replace state")
 
         self.popMenu_Selected = QtWidgets.QAction("Selected", self)
@@ -566,8 +582,16 @@ class Buttons_ADD (QtWidgets.QPushButton):
         # self.setStyleSheet("background-color: rgba(255, 255, 255,50);")
         # self.setText("add")
         self.setMaximumSize(20,20)
-        self.setIcon(QtGui.QIcon("D:/MironovS/Test_script/feather/plus.svg"))
+        self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/plus.svg")))
         self.CreatContextMenu()
+
+    def enterEvent(self,event):
+        self.setCursor(QtCore.Qt.PointingHandCursor)
+        super(Buttons_ADD, self).enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.setCursor(QtCore.Qt.ArrowCursor)
+        super(Buttons_ADD, self).leaveEvent(event)
 
     def mousePressEvent(self, event):
 
@@ -592,6 +616,11 @@ class Buttons_ADD (QtWidgets.QPushButton):
         self.popMenu.addAction(self.popMenuCategory)
         self.popMenuCategory.setCheckable(True)
         self.popMenuCategory.triggered.connect(self.Add_Category)
+
+        self.action_group_Buttons = QtWidgets.QActionGroup(self)
+
+        self.action_group_Buttons.addAction(self.popMenuButtons)
+        self.action_group_Buttons.addAction(self.popMenuCategory)
 
     def Add_Category(self, state):
 
@@ -637,7 +666,6 @@ class MyScrollArea(QtWidgets.QScrollArea):
         self.setFocusPolicy(QtCore.Qt.NoFocus)
         self.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        # self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
 
         self.scrollbar = QtWidgets.QScrollBar()
         self.scrollbar.setStyleSheet(scroll_style)
@@ -677,16 +705,14 @@ class MyScrollArea(QtWidgets.QScrollArea):
             widget = self.scroll_area_widget_layout.itemAt(i).widget()
             widetName = widget.objectName()
             if widetName == "Separator":
-                print("Separator")
+
                 continue
             visibl = widget.isVisible()
             if visibl == False:
                 widget.setVisible(1)
                 self.scroll_area_widget_layout.insertWidget(self.index, widget)
-            print(num, widetName,visibl)
 
         self.Separator.setVisible(0)
-
 
     def dragEnterEvent(self, event):
         event.acceptProposedAction()
@@ -694,7 +720,7 @@ class MyScrollArea(QtWidgets.QScrollArea):
         event.source().setVisible(0)
         self.Separator.setVisible(1)
 
-        indexX   = event.pos().x()//50
+        indexX   = event.pos().x()//40
 
         self.scroll_area_widget_layout.insertWidget(indexX, self.Separator)
         self.index = indexX
@@ -707,12 +733,10 @@ class MyScrollArea(QtWidgets.QScrollArea):
             item = self.scroll_area_widget_layout.itemAt(i)
             widet = item.widget().objectName()
             visibl = item.widget().isVisible()
-            # print(num, widet, visibl)
-
 
         self.Separator.setVisible(1)
-        indexX = event.pos().x() // 50
-        print(indexX)
+        indexX = event.pos().x() // 40
+
 
         self.scroll_area_widget_layout.insertWidget(indexX, self.Separator)
         self.index = indexX
@@ -726,9 +750,10 @@ class MyScrollArea(QtWidgets.QScrollArea):
             Name = mimeData.Name_Btn
 
         Count = self.scroll_area_widget_layout.count()
-        indexX = event.pos().x() // 50
+        indexX = (event.pos().x() // 50)
 
-        print(indexX,"Index pos")
+
+
         listW = []
 
         Index = int
@@ -748,7 +773,7 @@ class MyScrollArea(QtWidgets.QScrollArea):
             widet.setVisible(1)
             self.scroll_area_widget_layout.insertWidget(indexX, widet)
 
-            print("this name [{}] already exists in [{}]".format(Name, self.objectName()))
+            # print("this name [{}] already exists in [{}]".format(Name, self.objectName()))
 
 
         else:
@@ -763,11 +788,11 @@ class MyScrollArea(QtWidgets.QScrollArea):
 
                 item = self.scroll_area_widget_layout.itemAt(i)
                 widet = item.widget().objectName()
-                print(num, widet)
+
 
             event.source().setVisible(1)
 
-            print("this name [{}] move in [{}]".format(Name, self.objectName()))
+            # print("this name [{}] move in [{}]".format(Name, self.objectName()))
 
 class FieldScrollArea(QtWidgets.QWidget):
 
@@ -780,6 +805,7 @@ class FieldScrollArea(QtWidgets.QWidget):
     def __init__(self,text = ""):
         super(FieldScrollArea, self).__init__()
 
+        self.json_data = get_json_data()
         self._text = text
         self.setObjectName(text)
         self.setMaximumWidth(60)
@@ -836,13 +862,6 @@ class FieldScrollArea(QtWidgets.QWidget):
 
         self.categoryScroll_area_layout.addWidget(self.categoryScroll_area)
 
-        # json data
-        self.json_file_path_ButtonsName = "D:/MironovS/Test_script/TestUI/listButtonsName.json"
-        self.json_data = None
-        with open(self.json_file_path_ButtonsName, "r") as inFile:
-            self.json_data = json.load(inFile)
-
-
         # add separator BTN
         self.Separator = Separator_BTN(60,20)
         self.value_Btn_widget_layout.addWidget(self.Separator)
@@ -863,7 +882,7 @@ class FieldScrollArea(QtWidgets.QWidget):
 
     def Delete_Category(self):
         self.deleteLater()
-        print(self.objectName(), "delete")
+        # print(self.objectName(), "delete")
         self.itDeleteCategory.emit(self.objectName())
 
     def receiveSignal(self, text):
@@ -881,8 +900,6 @@ class FieldScrollArea(QtWidgets.QWidget):
 
         self.Separator.setVisible(0)
 
-
-
     def dragMoveEvent(self, event):
         event.acceptProposedAction()
 
@@ -892,8 +909,6 @@ class FieldScrollArea(QtWidgets.QWidget):
         if indexY == -1:
             indexY = 0
         self.value_Btn_widget_layout.insertWidget(indexY, self.Separator)
-
-
 
     def dropEvent(self, event):
 
@@ -926,7 +941,7 @@ class FieldScrollArea(QtWidgets.QWidget):
             widet.setVisible(1)
 
 
-            print("this name [{}] already exists in [{}]".format(Name,  self.objectName()))
+            # print("this name [{}] already exists in [{}]".format(Name,  self.objectName()))
             self.value_Btn_widget_layout.insertWidget(indexY, widet)
 
         else:
@@ -936,7 +951,7 @@ class FieldScrollArea(QtWidgets.QWidget):
 
             event.source().deleteLater()
 
-            print("this name [{}] move in [{}]".format(Name, self.objectName()))
+            # print("this name [{}] move in [{}]".format(Name, self.objectName()))
 
 class LibraryName(MayaQWidgetBaseMixin, QtWidgets.QDialog):
     itClickedName = QtCore.Signal(str)
@@ -944,6 +959,7 @@ class LibraryName(MayaQWidgetBaseMixin, QtWidgets.QDialog):
     def __init__(self):
         super(LibraryName, self).__init__()
 
+        self.json_data = get_json_data()
 
         self.setapUI()
         self.menuBarLib()
@@ -954,10 +970,7 @@ class LibraryName(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setMinimumSize(180, 200)
         self.setMaximumSize(420, 350)
-        self.resize(300, 225)
-
-
-        # self.setMaximumWidth(500)
+        self.resize(300, 300)
 
         self.setWindowTitle("Lib Name")
 
@@ -1001,29 +1014,6 @@ class LibraryName(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.scroll_area_widget.setLayout(self.scroll_layout)
 
         self.shadow_Layout.addWidget(self.scroll_area)
-
-        Style_btn = """
-                                                                               QPushButton {
-                                                                               border-style: outset;
-                                                                               border-width: 1px;
-                                                                               border-radius: 5px;
-                                                                               border-color: beige;
-                                                                               font: bold 14px;
-
-
-                                                                               font: 10pt, Arial;
-                                                                               color: rgb(255, 255, 255);}
-                                                                               QPushButton:hover{
-                                                                               border-color: rgb(50, 50, 50);	
-                                                                               background-color: rgb(3, 100, 89);}
-                                                                               QPushButton:pressed {
-                                                                               background-color: rgb(224, 0, 0);
-                                                                               border-style: inset;}
-                                                                               """
-        self.json_file_path_ButtonsName = "D:/MironovS/Test_script/TestUI/listButtonsName.json"
-        self.json_data = None
-        with open(self.json_file_path_ButtonsName, "r") as inFile:
-            self.json_data = json.load(inFile)
 
         # layout
         self.field_btn_layout = QtWidgets.QHBoxLayout()
@@ -1085,7 +1075,7 @@ class LibraryName(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.menuBar = QtWidgets.QMenuBar()
         self.main_layout.setMenuBar(self.menuBar)
         #  MENU Edit
-        self.Edit_menu = self.menuBar.addMenu("Edit")
+        self.Edit_menu = self.menuBar.addMenu(QtGui.QIcon(os.path.join(root_, "icons/tool.svg")),"Edit")
         self.Edit_menu.setTearOffEnabled(True)
 
         # Save
@@ -1118,19 +1108,10 @@ class LibraryName(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.suMenuCategory.setCheckable(True)
         self.suMenuCategory.triggered.connect(self.Menu_Add_Category)
 
-        # name input
-        # self.Edit_menu_sub_Name_input = self.Edit_menu.addMenu("Name input")
-        #
-        # # in Text
-        # self.Edit_menu_InText_sub = QtWidgets.QAction("in text field ", self)
-        # self.Edit_menu_InText_sub.setCheckable(True)
-        # self.Edit_menu_InText_sub.setChecked(True)
-        # self.Edit_menu_sub_Name_input.addAction(self.Edit_menu_InText_sub)
-        #
-        # # in Selection object
-        # self.Edit_menu_Object_sub = QtWidgets.QAction("in Selected object", self)
-        # self.Edit_menu_Object_sub.setCheckable(True)
-        # self.Edit_menu_sub_Name_input.addAction(self.Edit_menu_Object_sub)
+        self.action_group_Buttons = QtWidgets.QActionGroup(self)
+
+        self.action_group_Buttons.addAction(self.subMenuButtons)
+        self.action_group_Buttons.addAction(self.suMenuCategory)
 
         # find duplicate names
         self.Edit_menu_find_Name = QtWidgets.QAction("Find duplicate names",self)
@@ -1138,11 +1119,11 @@ class LibraryName(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.Edit_menu_find_Name.triggered.connect(self.Find_duplicate_names)
 
         # # seprator
-        # self.Edit_menu.addSeparator()
+        self.Edit_menu.addSeparator()
 
         #  MENU Help
-        self.Help_menu = self.menuBar.addMenu("Help")
-        self.Help_menu.setTearOffEnabled(True)
+        self.Help_menu = self.Edit_menu.addMenu("Help")
+        # self.Help_menu.setTearOffEnabled(True)
 
         # info
         self.Help_menu_Info = QtWidgets.QAction("Info", self)
@@ -1152,8 +1133,7 @@ class LibraryName(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
         self.json_data["ListName"] = self.json_data["ListNameDefault"]
 
-        with open(self.json_file_path_ButtonsName, "w") as outfile:
-            json.dump(self.json_data, outfile, indent=4)
+        set_json_data(self.json_data)
 
         Count = self.scroll_layout.count()
         for i in range(Count):
@@ -1181,6 +1161,8 @@ class LibraryName(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         else:
             self.setMaximumWidth(180)
 
+        print("Reset Setting")
+
     def Save(self):
         Count = self.scroll_layout.count()
         key = []
@@ -1196,7 +1178,6 @@ class LibraryName(MayaQWidgetBaseMixin, QtWidgets.QDialog):
             for a in range(CauntW):
                 Value_W = key_W.value_Btn_widget_layout.itemAt(a).widget().objectName()
                 if Value_W == "Separator":
-                    print("Separator")
                     continue
                 listForKey.append(Value_W)
 
@@ -1204,8 +1185,7 @@ class LibraryName(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
         self.json_data["ListName"] = listValue
 
-        with open(self.json_file_path_ButtonsName, "w") as outfile:
-            json.dump(self.json_data, outfile, indent=4)
+        set_json_data(self.json_data)
 
         print("Save Setting")
 
@@ -1231,11 +1211,11 @@ class LibraryName(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         duplicate = []
 
         for index , NameKey1 in enumerate(key, start=1):  # [{'Default'}, 'Postfixes', 'Base', 'Limbs', 'Fingers', 'Face', 'Other']
-            for i in listValue[NameKey1]: # {'Default': [i,...]}
+            for i in listValue[NameKey1]: # {'Default': [i,...]}Separator
 
                 duplicate_in_Category = []
 
-                if i in duplicate:
+                if i in duplicate or i == "Separator":
                     continue
 
                 for NameKey2 in key[index:]:   # ['Default', {'Postfixes'}, 'Base', 'Limbs', 'Fingers', 'Face', 'Other']
@@ -1274,12 +1254,12 @@ class LibraryName(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
         if bool:
             self.add_field_name.setPlaceholderText("Name")
-            self.add_bnt_name.setIcon(QtGui.QIcon("D:/MironovS/Test_script/feather/plus.svg"))
+            self.add_bnt_name.setIcon(QtGui.QIcon(os.path.join(root_, "icons/plus.svg")))
             self.suMenuCategory.setChecked(False)
             self.subMenuButtons.setChecked(True)
         else:
             self.add_field_name.setPlaceholderText("Category")
-            self.add_bnt_name.setIcon(QtGui.QIcon("D:/MironovS/Test_script/feather/book.svg"))
+            self.add_bnt_name.setIcon(QtGui.QIcon(os.path.join(root_, "icons/file-plus.svg")))
             self.suMenuCategory.setChecked(True)
             self.subMenuButtons.setChecked(False)
 
@@ -1311,7 +1291,7 @@ class LibraryName(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
                     if nameField:
                         if nameField in listWidget:
-                            #TODO  Add error window
+
                             print("this name [{}] already exists in [{}]".format(nameField, CategoryinBox))
 
                         else:
@@ -1401,7 +1381,7 @@ class LibraryName(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         for i in range(Count):
             item = self.scroll_layout.itemAt(i)
             widget = item.widget()
-            print(widget.objectName())
+
             if widget.objectName() == text:
                 index = i + moveWidget
                 if index == Count:
@@ -1414,8 +1394,7 @@ class LibraryName(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
     def receiveSignal(self, text):
         self.itClickedName.emit(text)
-# (MayaQWidgetDockableMixin, QtWidgets.QDockWidget):
-# class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
+# MayaQWidgetDockableMixin, QtWidgets.QDockWidget
 class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
     def __init__(self):
@@ -1432,14 +1411,15 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.main_layout.setSpacing(2)
         self.setLayout(self.main_layout)
 
-        self.setupUI()
         self.menuUI()
+        self.setupUI()
+
 
         self.json_data = get_json_data()
 
     def setupUI(self):
 
-        self.state_prefix_suffix = True
+        self.state_prefix_suffix = self.Edit_menu_prefix_suffix.isChecked()
         self.Start_index_Number = 1
         self.maxRange = 0
         self.minRange = 0
@@ -1513,11 +1493,159 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.main_layout.addWidget(self.listName_content_frame)
         self.main_layout.addWidget(self.SearchReplace_content_frame)
 
+    def SetupUI_Rename_content(self):
+
+        self.remove_start_btn = QtWidgets.QPushButton()
+        self.remove_start_btn.setIcon(QtGui.QIcon(os.path.join(root_, "icons/arrow-right.svg")))
+        self.remove_start_btn.setFixedWidth(25)
+
+        self.remove_end_btn = QtWidgets.QPushButton()
+        self.remove_end_btn.setIcon(QtGui.QIcon(os.path.join(root_, "icons/arrow-left.svg")))
+        self.remove_end_btn.setFixedWidth(25)
+
+        self.lineEdit_rename = DropLineEdit("Name")
+        self.lineEdit_rename.setMaximumWidth(200)
+
+        self.Rename_btn = Rename_BTN()
+        self.Rename_btn.isEmitStateRename.connect(self.EmitStateRename)
+
+        self.remove_start_btn.clicked.connect(self.remove_First_index)
+        self.remove_end_btn.clicked.connect(self.remove_Last_index)
+        self.lineEdit_rename.itDropName.connect(self.text_edited)
+        self.lineEdit_rename.cursorPositionChanged.connect(self.posNumber_cursor)
+        self.lineEdit_rename.returnPressed.connect(self.slidLineEdit)
+        self.lineEdit_rename.textEdited.connect(self.text_edited)
+        self.Rename_btn.clicked.connect(self.Set_ReName)
+
+        self.Rename_content_layout.addWidget(self.remove_start_btn)
+        self.Rename_content_layout.addWidget(self.remove_end_btn)
+        self.Rename_content_layout.addWidget(self.lineEdit_rename)
+        self.Rename_content_layout.addWidget(self.Rename_btn)
+
+    def SetupUI_Number_content(self):
+
+        self.AnimCheckBox = QtWidgets.QCheckBox()
+        self.AnimCheckBox.setFixedWidth(13)
+        # self.AnimCheckBox.setChecked(True)
+
+        self.number_start = QtWidgets.QSpinBox()
+        self.number_start.setPrefix("Start: ")
+        self.number_start.setValue(1)
+        self.number_start.setRange(0, 100)
+        self.number_start.setFixedSize(68, 25)
+
+        self.number_padding = QtWidgets.QSpinBox()
+        self.number_padding.setPrefix("Pad: ")
+        self.number_padding.setValue(2)
+        self.number_padding.setRange(1, 9)
+        self.number_padding.setFixedSize(65, 25)
+
+        self.index_slider = QtWidgets.QSlider()
+        self.index_slider.setOrientation(QtCore.Qt.Horizontal)
+        self.index_slider.setMaximumWidth(100)
+        self.index_slider.setRange(0, self.maxRange)
+
+        self.index_SpinBox = QtWidgets.QSpinBox()
+        self.index_SpinBox.setFixedSize(40,25)
+        self.index_SpinBox.setRange(self.index_slider.minimum(), self.index_slider.maximum())
+
+        self.number_start.valueChanged.connect(self.set_number_text)
+        self.number_padding.valueChanged.connect(self.set_number_text)
+        self.index_slider.sliderMoved.connect(self.slider_move_text)
+        self.index_SpinBox.valueChanged.connect(self.spinBox_value)
+        self.AnimCheckBox.toggled.connect(self.state_number)
+
+        self.Number_content_layout.addWidget(self.AnimCheckBox)
+        self.Number_content_layout.addWidget(self.number_start)
+        self.Number_content_layout.addWidget(self.number_padding)
+        self.Number_content_layout.addWidget(self.index_slider)
+        self.Number_content_layout.addWidget(self.index_SpinBox)
+
+        self.Number_content_layout.setAlignment(QtCore.Qt.AlignLeft)
+
+    def SetupUI_PreSuf_content(self):
+
+        self.state_prefix_suffix_CheckBox = QtWidgets.QCheckBox()
+        self.state_prefix_suffix_CheckBox.setFixedWidth(13)
+        # self.state_prefix_suffix_CheckBox.setChecked(True)
+        self.state_prefix_suffix_CheckBox.setVisible(0)
+        self.state_prefix_suffix_CheckBox.toggled.connect(self.get_state_prefix_suffix)
+
+        self.prefix_add_btn = QtWidgets.QPushButton()
+        self.prefix_add_btn.setIcon(QtGui.QIcon(os.path.join(root_, "icons/plus.svg")))
+        self.prefix_add_btn.setFixedWidth(25)
+        self.prefix_add_btn.clicked.connect(self.prefix_add)
+
+        self.prefix_Editline = DropLineEdit("prefix_")
+        self.prefix_Editline.setFixedWidth(103)
+        self.prefix_Editline.itDropName.connect(self.prefix_suffix_edited)
+        self.prefix_Editline.textEdited.connect(self.prefix_suffix_edited)
+
+        self.suffix_Editline = DropLineEdit("_suffix")
+        self.suffix_Editline.setFixedWidth(103)
+        self.suffix_Editline.itDropName.connect(self.prefix_suffix_edited)
+        self.suffix_Editline.textEdited.connect(self.prefix_suffix_edited)
+
+        self.suffix_add_btn = QtWidgets.QPushButton()
+        self.suffix_add_btn.setIcon(QtGui.QIcon(os.path.join(root_, "icons/plus.svg")))
+        self.suffix_add_btn.setFixedWidth(25)
+        self.suffix_add_btn.clicked.connect(self.suffix_add)
+
+        self.PreSuf_content_layout.addWidget(self.state_prefix_suffix_CheckBox)
+        self.PreSuf_content_layout.addWidget(self.prefix_add_btn)
+        self.PreSuf_content_layout.addWidget(self.prefix_Editline)
+        self.PreSuf_content_layout.addWidget(self.suffix_Editline)
+        self.PreSuf_content_layout.addWidget(self.suffix_add_btn)
+
+    def SetupUI_ListName_content(self):
+
+        self.CheckBox_btn_in_text = QtWidgets.QCheckBox()
+        self.CheckBox_btn_in_text.setChecked(False)
+        self.CheckBox_btn_in_text.setFixedWidth(13)
+        self.CheckBox_btn_in_text.setVisible(1)
+        self.CheckBox_btn_in_text.toggled.connect(self.in_text_field)
+
+        self.scroll_area_list_content_BTN = MyScrollArea(key="fast_access")
+        self.scroll_area_list_content_BTN.setFixedWidth(250)
+        self.scroll_area_list_content_BTN.itClickedName.connect(self.receiveSignal)
+
+        self.listName_content_layout.addWidget(self.CheckBox_btn_in_text)
+        self.listName_content_layout.addWidget(self.scroll_area_list_content_BTN)
+
+    def SetupUI_SearchReplace_content(self):
+
+        self.Search_and_Replace_checkbox = QtWidgets.QCheckBox()
+        self.Search_and_Replace_checkbox.setFixedWidth(13)
+        self.Search_and_Replace_checkbox.setVisible(0)
+        self.Search_and_Replace_checkbox.toggled.connect(self.emitSelandReplace)
+
+
+        self.search_BTN = Search_BTN()
+        self.search_BTN.isEmitState.connect(self.emitState_Search_Replace)
+        self.search_BTN.clicked.connect(self.Search)
+
+        self.search_Field = DropLineEdit("Search")
+        self.search_Field.setFixedWidth(103)
+
+        self.replace_Field = DropLineEdit("Replace")
+        self.replace_Field.setFixedWidth(103)
+
+        self.replace_BTN = Replace_BTN()
+        self.replace_BTN.isEmitState.connect(self.emitState_Search_Replace)
+        self.replace_BTN.clicked.connect(self.Replace)
+
+        self.SearchReplace_content_layout.addWidget(self.Search_and_Replace_checkbox)
+        self.SearchReplace_content_layout.addWidget(self.search_BTN)
+        self.SearchReplace_content_layout.addWidget(self.search_Field)
+        self.SearchReplace_content_layout.addWidget(self.replace_Field)
+        self.SearchReplace_content_layout.addWidget(self.replace_BTN)
+
     def menuUI(self):
+
         self.menuBar = QtWidgets.QMenuBar()
         self.main_layout.setMenuBar(self.menuBar)
         #  MENU Edit
-        self.Edit_menu = self.menuBar.addMenu(QtGui.QIcon(QtGui.QIcon(os.path.join(root_, "icons/tool.svg"))),"Edit")
+        self.Edit_menu = self.menuBar.addMenu(QtGui.QIcon(os.path.join(root_, "icons/tool.svg")),"Edit")
         self.Edit_menu.setTearOffEnabled(True)
 
         # Save
@@ -1541,7 +1669,6 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         # prefix suffix toggle
         self.Edit_menu_prefix_suffix = QtWidgets.QAction("prefix suffix in text field", self)
         self.Edit_menu_prefix_suffix.setCheckable(True)
-        self.Edit_menu_prefix_suffix.setChecked(True)
         self.Edit_menu_sub_Name_input.addAction(self.Edit_menu_prefix_suffix)
         self.Edit_menu_prefix_suffix.triggered.connect(self.Pref_Suf_State)
 
@@ -1551,19 +1678,17 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.separator_Buttons.priority()
         self.Edit_menu_sub_Name_input.addAction(self.separator_Buttons)
 
-        self.action_group_Buttons = QtWidgets.QActionGroup(self)
-
-
         # in Text
         self.Edit_menu_InText_sub = QtWidgets.QAction("in text field", self)
         self.Edit_menu_InText_sub.setCheckable(True)
-        self.Edit_menu_InText_sub.setChecked(True)
+
         self.Edit_menu_sub_Name_input.addAction(self.Edit_menu_InText_sub)
         self.Edit_menu_InText_sub.triggered.connect(self.State_in_text_field)
 
         # in Selection object
         self.Edit_menu_Object_sub = QtWidgets.QAction("in Selected object", self)
         self.Edit_menu_Object_sub.setCheckable(True)
+        self.Edit_menu_Object_sub.setChecked(True)
         self.Edit_menu_sub_Name_input.addAction(self.Edit_menu_Object_sub)
         self.Edit_menu_Object_sub.triggered.connect(self.State_in_Selected_object)
 
@@ -1579,12 +1704,12 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.Edit_menu_Number = QtWidgets.QAction("Number", self)
         self.Edit_menu_sub_Name_input.addAction(self.Edit_menu_Number)
         self.Edit_menu_Number.setCheckable(True)
-        self.Edit_menu_Number.setChecked(True)
+        # self.Edit_menu_Number.setChecked(True)
         self.Edit_menu_Number.triggered.connect(self.Number_state)
 
         # Search and Replace
         self.Edit_menu_sub_Search_and_Replace = self.Edit_menu.addMenu("Search and Replace")
-        self.Edit_menu_sub_Search_and_Replace.setTearOffEnabled(True)
+        # self.Edit_menu_sub_Search_and_Replace.setTearOffEnabled(True)
 
         self.Edit_sub_S_and_R_Sel = QtWidgets.QAction("Selected", self)
         self.Edit_menu_sub_Search_and_Replace.addAction(self.Edit_sub_S_and_R_Sel)
@@ -1612,7 +1737,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.Edit_menu.addSeparator()
 
         self.Help_menu = self.Edit_menu.addMenu("Help")
-        self.Help_menu.setTearOffEnabled(True)
+        # self.Help_menu.setTearOffEnabled(True)
 
         # info
         self.Help_menu_Info = QtWidgets.QAction("Info", self)
@@ -1622,149 +1747,63 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.LibName_menu_Act = QtWidgets.QAction(QtGui.QIcon(QtGui.QIcon(os.path.join(root_, "icons/book.svg"))), "Book", self)
         self.LibName_menu = self.menuBar.addAction(self.LibName_menu_Act)
         self.LibName_menu_Act.setCheckable(True)
-        self.LibName_menu_Act.triggered.connect(self.libNameUI)
+        self.LibName_menu_Act.toggled.connect(self.libNameUI)
 
-    def SetupUI_Rename_content(self):
+    def Save(self):
 
-        self.remove_start_btn = QtWidgets.QPushButton()
-        self.remove_start_btn.setIcon(QtGui.QIcon(os.path.join(root_, "icons/arrow-right.svg")))
-        self.remove_start_btn.setFixedWidth(25)
+        Count = self.scroll_area_list_content_BTN.scroll_area_widget_layout.count()
+        Value = []
+        for i in range(Count):
+            Widgwt = self.scroll_area_list_content_BTN.scroll_area_widget_layout.itemAt(i).widget()
+            Widgwt_Name = Widgwt.objectName()
+            if Widgwt_Name == "Separator":
+                continue
+            Value.append(Widgwt_Name)
 
-        self.remove_end_btn = QtWidgets.QPushButton()
-        self.remove_end_btn.setIcon(QtGui.QIcon(os.path.join(root_, "icons/arrow-left.svg")))
-        self.remove_end_btn.setFixedWidth(25)
+        self.json_data["fast_access"] = Value
 
-        self.lineEdit_rename = DropLineEdit("prefix_name01_suffix")
-        self.lineEdit_rename.setMaximumWidth(200)
+        set_json_data(self.json_data)
+        print("Save")
 
-        self.Rename_btn = QtWidgets.QPushButton("ReName")
-        self.Rename_btn.setFixedWidth(50)
+    def Reset(self):
 
-        self.remove_start_btn.clicked.connect(self.remove_First_index)
-        self.remove_end_btn.clicked.connect(self.remove_Last_index)
-        self.lineEdit_rename.itDropName.connect(self.text_edited)
-        self.lineEdit_rename.cursorPositionChanged.connect(self.posNumber_cursor)
-        self.lineEdit_rename.returnPressed.connect(self.slidLineEdit)
-        self.lineEdit_rename.textEdited.connect(self.text_edited)
-        self.Rename_btn.clicked.connect(self.ReName)
+        self.json_data["fast_access"] = self.json_data["fast_accessDefault"]
 
-        self.Rename_content_layout.addWidget(self.remove_start_btn)
-        self.Rename_content_layout.addWidget(self.remove_end_btn)
-        self.Rename_content_layout.addWidget(self.lineEdit_rename)
-        self.Rename_content_layout.addWidget(self.Rename_btn)
+        set_json_data(self.json_data)
 
-    def SetupUI_Number_content(self):
+        Count = self.scroll_area_list_content_BTN.scroll_area_widget_layout.count()
+        for i in range(Count):
+            Widgwt = self.scroll_area_list_content_BTN.scroll_area_widget_layout.itemAt(i).widget()
+            Widgwt_Name = Widgwt.objectName()
+            if Widgwt_Name == "Separator":
+                continue
 
-        self.AnimCheckBox = QtWidgets.QCheckBox()
-        self.AnimCheckBox.setFixedWidth(13)
-        self.AnimCheckBox.setChecked(True)
+            Widgwt.deleteLater()
+        self.scroll_area_list_content_BTN.Add_Buttons()
 
-        self.number_start = QtWidgets.QSpinBox()
-        self.number_start.setPrefix("Start: ")
-        self.number_start.setValue(1)
-        self.number_start.setRange(0, 100)
-        self.number_start.setFixedSize(68, 25)
+        print("Reset")
 
-        self.number_padding = QtWidgets.QSpinBox()
-        self.number_padding.setPrefix("Padding: ")
-        self.number_padding.setValue(2)
-        self.number_padding.setRange(1, 9)
-        self.number_padding.setFixedSize(82, 25)
+    def Replace(self):
 
-        self.index_slider = QtWidgets.QSlider()
-        self.index_slider.setOrientation(QtCore.Qt.Horizontal)
-        self.index_slider.setMaximumWidth(100)
-        self.index_slider.setRange(0, self.maxRange)
+        ReplaceName = self.replace_Field.text()
+        ListSearchName, state, SearchName = self.get_ListLongName_Search_Replace()
+        sortName = sorted(ListSearchName, key=len, reverse=True)
 
-        self.index_SpinBox = QtWidgets.QSpinBox()
-        self.index_SpinBox.setFixedWidth(35)
-        self.index_SpinBox.setRange(self.index_slider.minimum(), self.index_slider.maximum())
+        if ReplaceName:
+            for i in sortName:
 
-        self.number_start.valueChanged.connect(self.set_number_text)
-        self.number_padding.valueChanged.connect(self.set_number_text)
-        self.index_slider.sliderMoved.connect(self.slider_move_text)
-        self.index_SpinBox.valueChanged.connect(self.spinBox_value)
-        self.AnimCheckBox.toggled.connect(self.state_number)
+                shortName    = self.get_short_Name(i)
+                NewshortName = shortName.replace(SearchName, ReplaceName, 1)
+                cmds.rename(i, NewshortName)
 
-        self.Number_content_layout.addWidget(self.AnimCheckBox)
-        self.Number_content_layout.addWidget(self.number_start)
-        self.Number_content_layout.addWidget(self.number_padding)
-        self.Number_content_layout.addWidget(self.index_slider)
-        self.Number_content_layout.addWidget(self.index_SpinBox)
+        print("Replace '{}' with '{}' in {} names: {}".format(SearchName, ReplaceName, len(ListSearchName), state))
 
-    def SetupUI_PreSuf_content(self):
+    def Search(self):
 
-        self.state_prefix_suffix_CheckBox = QtWidgets.QCheckBox()
-        self.state_prefix_suffix_CheckBox.setFixedWidth(13)
-        self.state_prefix_suffix_CheckBox.setChecked(True)
-        self.state_prefix_suffix_CheckBox.toggled.connect(self.get_state_prefix_suffix)
+        ListSearchName, state, SearchName = self.get_ListLongName_Search_Replace()
 
-        self.prefix_add_btn = QtWidgets.QPushButton()
-        self.prefix_add_btn.setIcon(QtGui.QIcon(os.path.join(root_, "icons/plus.svg")))
-        self.prefix_add_btn.setFixedWidth(25)
-        self.prefix_add_btn.clicked.connect(self.prefix_add)
-
-        self.prefix_Editline = DropLineEdit("prefix_")
-        self.prefix_Editline.setFixedWidth(97)
-        self.prefix_Editline.itDropName.connect(self.prefix_suffix_edited)
-        self.prefix_Editline.textEdited.connect(self.prefix_suffix_edited)
-
-        self.suffix_Editline = DropLineEdit("_suffix")
-        self.suffix_Editline.setFixedWidth(97)
-        self.suffix_Editline.itDropName.connect(self.prefix_suffix_edited)
-        self.suffix_Editline.textEdited.connect(self.prefix_suffix_edited)
-
-        self.suffix_add_btn = QtWidgets.QPushButton()
-        self.suffix_add_btn.setIcon(QtGui.QIcon(os.path.join(root_, "icons/plus.svg")))
-        self.suffix_add_btn.setFixedWidth(25)
-        self.suffix_add_btn.clicked.connect(self.suffix_add)
-
-        self.PreSuf_content_layout.addWidget(self.state_prefix_suffix_CheckBox)
-        self.PreSuf_content_layout.addWidget(self.prefix_add_btn)
-        self.PreSuf_content_layout.addWidget(self.prefix_Editline)
-        self.PreSuf_content_layout.addWidget(self.suffix_Editline)
-        self.PreSuf_content_layout.addWidget(self.suffix_add_btn)
-
-    def SetupUI_ListName_content(self):
-
-        self.CheckBox_btn_in_text = QtWidgets.QCheckBox()
-        self.CheckBox_btn_in_text.setChecked(True)
-        self.CheckBox_btn_in_text.setFixedWidth(13)
-        self.CheckBox_btn_in_text.toggled.connect(self.in_text_field)
-
-        self.scroll_area_list_content_BTN = MyScrollArea(key="fast_access")
-        self.scroll_area_list_content_BTN.setFixedWidth(250)
-        self.scroll_area_list_content_BTN.itClickedName.connect(self.receiveSignal)
-
-        self.listName_content_layout.addWidget(self.CheckBox_btn_in_text)
-        self.listName_content_layout.addWidget(self.scroll_area_list_content_BTN)
-
-    def SetupUI_SearchReplace_content(self):
-
-        self.Search_and_Replace_checkbox = QtWidgets.QCheckBox()
-        self.Search_and_Replace_checkbox.setFixedWidth(13)
-        self.Search_and_Replace_checkbox.toggled.connect(self.emitSelandReplace)
-
-
-        self.search_BTN = Search_BTN()
-        self.search_BTN.isEmitState.connect(self.emitState_Search_Replace)
-        self.search_BTN.clicked.connect(self.Search)
-
-        self.search_Field = DropLineEdit("Search")
-        self.search_Field.setFixedWidth(97)
-
-        self.replace_Field = DropLineEdit("Replace")
-        self.replace_Field.setFixedWidth(97)
-
-        self.replace_BTN = Replace_BTN()
-        self.replace_BTN.isEmitState.connect(self.emitState_Search_Replace)
-        self.replace_BTN.clicked.connect(self.Replace)
-
-        self.SearchReplace_content_layout.addWidget(self.Search_and_Replace_checkbox)
-        self.SearchReplace_content_layout.addWidget(self.search_BTN)
-        self.SearchReplace_content_layout.addWidget(self.search_Field)
-        self.SearchReplace_content_layout.addWidget(self.replace_Field)
-        self.SearchReplace_content_layout.addWidget(self.replace_BTN)
+        cmds.select(ListSearchName)
+        print("Search '{}' in {} names: {}".format(SearchName,len(ListSearchName),state))
 
     def get_ListLongName_Search_Replace(self):
 
@@ -1794,31 +1833,6 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
                     ListSearchName.append(i)
 
         return ListSearchName, state, SearchName
-
-
-
-    def Replace(self):
-
-        ReplaceName = self.replace_Field.text()
-        ListSearchName, state, SearchName = self.get_ListLongName_Search_Replace()
-        sortName = sorted(ListSearchName, key=len, reverse=True)
-
-        if ReplaceName:
-            for i in sortName:
-
-                shortName    = self.get_short_Name(i)
-                NewshortName = shortName.replace(SearchName, ReplaceName, 1)
-                cmds.rename(i, NewshortName)
-
-        print("Replace '{}' with '{}' in {} names: {}".format(SearchName, ReplaceName, len(ListSearchName), state))
-
-    def Search(self):
-
-        ListSearchName, state, SearchName = self.get_ListLongName_Search_Replace()
-
-        cmds.select(ListSearchName)
-        print("Search '{}' in {} names: {}".format(SearchName,len(ListSearchName),state))
-
     def emitSelandReplace(self, state):
 
         if state:
@@ -1826,6 +1840,35 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
         else:
             self.emitSearchSelected()
+
+    def EmitStateRename(self, state, bool):
+
+        if state == "Pref_Suff":
+            self.Pref_Suf_State(bool)
+            self.Edit_menu_prefix_suffix.setChecked(bool)
+
+        if state == "text_field":
+            self.Edit_menu_InText_sub.setChecked(bool)
+            self.State_in_text_field(bool)
+        if state == "Selected_object":
+            self.Edit_menu_Object_sub.setChecked(bool)
+            self.State_in_Selected_object(bool)
+
+        if state == "Number":
+            self.Number_state(bool)
+
+
+
+
+
+        # def State_in_text_field(self, state):
+        #     self.isEmitStateRename.emit("text_field")
+        #
+        # def State_in_Selected_object(self, state):
+        #     self.isEmitStateRename.emit("Selected_object")
+        #
+        # def Number_state(self, state):
+        #     self.isEmitStateRename.emit("Selected_object")
 
     def emitState_Search_Replace(self, state):
 
@@ -1844,7 +1887,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         else:
             self.State_in_Selected_object(state)
 
-    def ReName(self):
+    def Set_ReName(self):
 
         if self.AnimCheckBox.isChecked():
             Number = self.NumberText
@@ -1890,11 +1933,6 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
                         shortName = NewshortName
 
                     ListLongName = self.retur_NewNamelongList(ListLongName, i, shortName)
-
-
-
-        else:
-            print(HolderName)
 
     def get_short_Name(self, longName):
         shortName = longName.rpartition("|")[-1]
@@ -1980,7 +2018,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 
             if len(text) > len(old_text): # items_add
-                print(old_text)
+
                 self.oldTextLine = text
 
                 if sectionText != Number or Number == "" and cursor_pos <= start: # items_add in left_text! [left_text] >|< (sectionText != [Number]) [right_text]
@@ -2118,7 +2156,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
                     self.oldTextLine = old_text
 
         else:
-            print("here")
+
             if  len(text) == len(Number) + len(prefix) + len(suffix) or len(text) == 0:
 
                 self.lineEdit_rename.setText("")
@@ -2131,7 +2169,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
                 self.Start_index_Number = 0
 
             else:
-                print("here")
+
                 self.maxRange = len(text) + len(prefix)
                 self.Start_index_Number = len(text) + len(prefix)
                 start = self.Start_index_Number
@@ -2149,7 +2187,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         left_text  = left_text[len(prefix):]
         right_text = right_text[:len(right_text)-len(suffix)]
 
-        print("[{3}][{0}][{2}][{1}][{4}] Range = {5} {6}".format(left_text, right_text, Number, prefix, suffix, self.maxRange,Delete_number))
+        # print("[{3}][{0}][{2}][{1}][{4}] Range = {5} {6}".format(left_text, right_text, Number, prefix, suffix, self.maxRange,Delete_number))
 
         self.index_slider.setRange(self.minRange, self.maxRange)
         self.index_SpinBox.setRange(self.index_slider.minimum(), self.index_slider.maximum())
@@ -2158,7 +2196,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.index_SpinBox.setValue(self.Start_index_Number)
 
     def slidLineEdit(self):
-        self.Rename()
+        self.Set_ReName()
 
     def set_number_text(self):
 
@@ -2193,7 +2231,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
         self.NumberText = Number
 
-        print("[{0}][{2}][{1}] Range = {3} {4}".format(left_text, right_text, Number, self.maxRange, Delete_number))
+        # print("[{0}][{2}][{1}] Range = {3} {4}".format(left_text, right_text, Number, self.maxRange, Delete_number))
 
     def posNumber_cursor(self,oldPos,newPos):
 
@@ -2279,7 +2317,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
             self.Start_index_Number = value
             self.lineEdit_rename.setCursorPosition(value)
 
-            print("[{0}][{2}][{1}] value = {3}".format(New_Text[:value], New_Text[value:],Number, value))
+            # print("[{0}][{2}][{1}] value = {3}".format(New_Text[:value], New_Text[value:],Number, value))
 
         self.index_slider.setValue(value)
 
@@ -2287,6 +2325,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
         self.number_start.setReadOnly(state)
         self.Edit_menu_Number.setChecked(state)
+        self.Rename_btn.popMenu_Number.setChecked(state)
 
         Number      = self.NumberText
         name        = self.lineEdit_rename.text()
@@ -2301,6 +2340,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
             self.number_start.setReadOnly(False)
             self.number_padding.setReadOnly(False)
             self.index_SpinBox.setReadOnly(False)
+            self.index_slider.setVisible(True)
 
             if cursor_pos in range(start,len(name)+1):
                 cursor_pos += len(Number)
@@ -2321,6 +2361,8 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
             self.number_start.setReadOnly(True)
             self.number_padding.setReadOnly(True)
             self.index_SpinBox.setReadOnly(True)
+            self.index_slider.setVisible(False)
+
             if cursor_pos in range(end,len(name) +1):
                 cursor_pos -= len(Number)
                 # print("-",cursor_pos)
@@ -2370,7 +2412,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
                 self.Start_index_Number += 1
                 self.maxRange += 1
 
-        print(self.Start_index_Number)
+        # print(self.Start_index_Number)
 
         if suffix != "" and suffix[0] != "_" and text != "":
 
@@ -2409,7 +2451,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         else:
             self.minRange = 0
 
-        print(self.Start_index_Number)
+        # print(self.Start_index_Number)
 
         self.old_prefix = prefix
         self.old_suffix = suffix
@@ -2517,57 +2559,25 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
                 NewshortName =  shortName + suffix
 
                 cmds.rename(i, NewshortName)
-    def Save(self):
 
-        Count = self.scroll_area_left_list_content_BTN.scroll_area_widget_layout.count()
-        Value = []
-        for i in range(Count):
-            Widgwt = self.scroll_area_left_list_content_BTN.scroll_area_widget_layout.itemAt(i).widget()
-            Widgwt_Name = Widgwt.objectName()
-            if Widgwt_Name == "Separator":
-                continue
-            Value.append(Widgwt_Name)
-
-
-        self.json_data["fast_access"] = Value
-
-        self.json_file_path_ButtonsName = "D:/MironovS/Test_script/TestUI/listButtonsName.json"
-        with open(self.json_file_path_ButtonsName, "w") as outfile:
-            json.dump(self.json_data, outfile, indent=4)
-
-    def Reset(self):
-
-        self.json_data["fast_access"] = self.json_data["fast_accessDefault"]
-
-        self.json_file_path_ButtonsName = "D:/MironovS/Test_script/TestUI/listButtonsName.json"
-        with open(self.json_file_path_ButtonsName, "w") as outfile:
-            json.dump(self.json_data, outfile, indent=4)
-
-        Count = self.scroll_area_left_list_content_BTN.scroll_area_widget_layout.count()
-        for i in range(Count):
-            Widgwt = self.scroll_area_left_list_content_BTN.scroll_area_widget_layout.itemAt(i).widget()
-            Widgwt_Name = Widgwt.objectName()
-            if Widgwt_Name == "Separator":
-                continue
-
-            Widgwt.deleteLater()
-        self.scroll_area_left_list_content_BTN.Add_Buttons()
     def Pref_Suf_State(self, state):
         self.state_prefix_suffix_CheckBox.setChecked(state)
+        self.Rename_btn.popMenu_PrefSuf.setChecked(state)
 
     def State_in_text_field(self, state):
 
-        self.Edit_menu_InText_sub.setChecked(True)
         self.Edit_menu_Object_sub.setChecked(False)
-
+        self.Edit_menu_InText_sub.setChecked(True)
         self.CheckBox_btn_in_text.setChecked(True)
+        self.Rename_btn.popMenu_InText_sub.setChecked(True)
+
 
     def State_in_Selected_object(self, state):
-
-        self.Edit_menu_InText_sub.setChecked(False)
         self.Edit_menu_Object_sub.setChecked(True)
-
+        self.Edit_menu_InText_sub.setChecked(False)
         self.CheckBox_btn_in_text.setChecked(False)
+        self.Rename_btn.popMenu_Object_sub.setChecked(True)
+
 
     def Number_state(self,state):
         self.AnimCheckBox.setChecked(state)
@@ -2644,8 +2654,8 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
             NameEdit = self.lineEdit_rename.text()
             self.text_edited(NameEdit)
 
-
 def get_json_data():
+    listButtonsName_path_ = os.path.join(root_, "listButtonsName.json")
     json_data = None
     with open(listButtonsName_path_, "r") as inFile:
         json_data = json.load(inFile)
@@ -2653,6 +2663,7 @@ def get_json_data():
     return json_data
 
 def set_json_data(json_data):
+    listButtonsName_path_ = os.path.join(root_, "listButtonsName.json")
     with open(listButtonsName_path_, "w") as outfile:
         json.dump(json_data, outfile, indent=4)
 
