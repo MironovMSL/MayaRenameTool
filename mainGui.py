@@ -2636,12 +2636,14 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
             cmds.windowPref("libNameID", remove=1)
 
         self.libName = LibraryName()
-        self.libName.show()
-        cmds.window("libNameID", e=1, titleBar=1, toolbox=1, )
+
 
         posX = self.geometry().left() + self.geometry().width()
         posY = self.y()
         self.libName.move(posX, posY)
+        self.libName.show()
+        cmds.window("libNameID", e=1, titleBar=1, toolbox=1, )
+
 
 
         self.libName.itClickedName.connect(self.receiveSignal)
