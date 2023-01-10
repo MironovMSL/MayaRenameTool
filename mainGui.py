@@ -3,6 +3,7 @@ from PySide2 import QtWidgets, QtGui, QtCore
 from maya.app.general.mayaMixin import MayaQWidgetDockableMixin , MayaQWidgetBaseMixin
 import os
 import re
+import sys
 import json
 
 root_ = os.path.dirname(__file__)
@@ -140,10 +141,27 @@ class Rename_BTN(QtWidgets.QPushButton):
     def __init__(self):
         super(Rename_BTN, self).__init__()
 
+        self.Style_btn = """
+                            QPushButton {
+                            background-color: rgb(20, 100, 90);
+                            border-style: outset;
+                            border-width: 1px;
+                            border-radius: 3px;
+                            border-color: beige;}
+                            
+                            QPushButton:hover{
+                            border-color: beige;
+                            background-color: rgb(20, 90, 90);}
+                            
+                            QPushButton:pressed{
+                            background-color: rgb(107, 107, 107);}
+                            """
+
         self.setObjectName("RenameID")
         self.setFixedSize(50, 25)
         self.setText("Rename")
         self.creat_context_menu()
+        self.setStyleSheet(self.Style_btn)
 
     def enterEvent(self,event):
         self.setCursor(QtCore.Qt.PointingHandCursor)
@@ -158,6 +176,8 @@ class Rename_BTN(QtWidgets.QPushButton):
 
         if event.buttons() == QtCore.Qt.RightButton:
             self.popMenu.exec_(self.mapToGlobal(event.pos()))
+
+        self.setStyleSheet(self.Style_btn)
 
     def creat_context_menu(self):
         self.popMenu = QtWidgets.QMenu(self)
@@ -970,7 +990,7 @@ class LibraryName(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.setMinimumSize(180, 200)
         self.setMaximumSize(420, 350)
-        self.resize(300, 300)
+        self.resize(300, 210)
 
         self.setWindowTitle("Lib Name")
 
@@ -1533,21 +1553,26 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.number_start.setValue(1)
         self.number_start.setRange(0, 100)
         self.number_start.setFixedSize(68, 25)
+        self.number_start.setReadOnly(True)
 
         self.number_padding = QtWidgets.QSpinBox()
         self.number_padding.setPrefix("Pad: ")
         self.number_padding.setValue(2)
         self.number_padding.setRange(1, 9)
         self.number_padding.setFixedSize(65, 25)
+        self.number_padding.setReadOnly(True)
 
         self.index_slider = QtWidgets.QSlider()
         self.index_slider.setOrientation(QtCore.Qt.Horizontal)
         self.index_slider.setMaximumWidth(100)
         self.index_slider.setRange(0, self.maxRange)
+        self.index_slider.setVisible(0)
+
 
         self.index_SpinBox = QtWidgets.QSpinBox()
         self.index_SpinBox.setFixedSize(40,25)
         self.index_SpinBox.setRange(self.index_slider.minimum(), self.index_slider.maximum())
+        self.index_SpinBox.setReadOnly(True)
 
         self.number_start.valueChanged.connect(self.set_number_text)
         self.number_padding.valueChanged.connect(self.set_number_text)
@@ -1568,7 +1593,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.state_prefix_suffix_CheckBox = QtWidgets.QCheckBox()
         self.state_prefix_suffix_CheckBox.setFixedWidth(13)
         # self.state_prefix_suffix_CheckBox.setChecked(True)
-        self.state_prefix_suffix_CheckBox.setVisible(0)
+        self.state_prefix_suffix_CheckBox.setVisible(1)
         self.state_prefix_suffix_CheckBox.toggled.connect(self.get_state_prefix_suffix)
 
         self.prefix_add_btn = QtWidgets.QPushButton()
@@ -1577,12 +1602,12 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.prefix_add_btn.clicked.connect(self.prefix_add)
 
         self.prefix_Editline = DropLineEdit("prefix_")
-        self.prefix_Editline.setFixedWidth(103)
+        self.prefix_Editline.setFixedWidth(97)
         self.prefix_Editline.itDropName.connect(self.prefix_suffix_edited)
         self.prefix_Editline.textEdited.connect(self.prefix_suffix_edited)
 
         self.suffix_Editline = DropLineEdit("_suffix")
-        self.suffix_Editline.setFixedWidth(103)
+        self.suffix_Editline.setFixedWidth(97)
         self.suffix_Editline.itDropName.connect(self.prefix_suffix_edited)
         self.suffix_Editline.textEdited.connect(self.prefix_suffix_edited)
 
@@ -1616,7 +1641,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
         self.Search_and_Replace_checkbox = QtWidgets.QCheckBox()
         self.Search_and_Replace_checkbox.setFixedWidth(13)
-        self.Search_and_Replace_checkbox.setVisible(0)
+        self.Search_and_Replace_checkbox.setVisible(1)
         self.Search_and_Replace_checkbox.toggled.connect(self.emitSelandReplace)
 
 
@@ -1625,10 +1650,10 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.search_BTN.clicked.connect(self.Search)
 
         self.search_Field = DropLineEdit("Search")
-        self.search_Field.setFixedWidth(103)
+        self.search_Field.setFixedWidth(97)
 
         self.replace_Field = DropLineEdit("Replace")
-        self.replace_Field.setFixedWidth(103)
+        self.replace_Field.setFixedWidth(97)
 
         self.replace_BTN = Replace_BTN()
         self.replace_BTN.isEmitState.connect(self.emitState_Search_Replace)
@@ -2323,7 +2348,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
     def state_number(self, state):
 
-        self.number_start.setReadOnly(state)
+
         self.Edit_menu_Number.setChecked(state)
         self.Rename_btn.popMenu_Number.setChecked(state)
 
@@ -2466,6 +2491,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
     def get_state_prefix_suffix(self,state):
 
         self.Edit_menu_prefix_suffix.setChecked(state)
+        self.Rename_btn.popMenu_PrefSuf.setChecked(state)
 
         name         = self.lineEdit_rename.text()
         prefix       = self.prefix_Editline.text()
