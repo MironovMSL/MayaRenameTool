@@ -660,9 +660,10 @@ class MyScrollArea(QtWidgets.QScrollArea):
 
     itClickedName = QtCore.Signal(str)
 
-    def __init__(self, key = None, OriLayout = QtWidgets.QHBoxLayout()):
-        super(MyScrollArea, self).__init__()
+    def __init__(self, parent =None, key = None ):#OriLayout = QtWidgets.QHBoxLayout()
+        super(MyScrollArea, self).__init__(parent)
 
+        self.OriLayout = QtWidgets.QHBoxLayout()
         self.key = key
         self.index = int
 
@@ -696,8 +697,8 @@ class MyScrollArea(QtWidgets.QScrollArea):
         self.setWidget(self.scroll_area_widget)
 
 
-        self.scroll_area_widget_layout = OriLayout
-        self.scroll_area_widget_layout.setAlignment(QtCore.Qt.AlignTop)
+        self.scroll_area_widget_layout = self.OriLayout
+        # self.scroll_area_widget_layout.setAlignment(QtCore.Qt.AlignTop)
         self.scroll_area_widget_layout.setContentsMargins(0, 0, 0, 0)
         self.scroll_area_widget_layout.setSpacing(2)
 
@@ -2616,6 +2617,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.Search_and_Replace_checkbox.setChecked(False)
 
     def emitSearchHierarchy(self):
+
         self.Edit_sub_S_and_R_Hi.setChecked(True)
         self.search_BTN.popMenu_Hierarchy.setChecked(True)
         self.replace_BTN.popMenu_Hierarchy.setChecked(True)
@@ -2709,7 +2711,6 @@ def create_gui():
     if cmds.windowPref("libNameID", exists=1):
         cmds.windowPref("libNameID", remove=1)
 
-    global Dialog
     Dialog = MSL_RenameTool()
     Dialog.show()
 
