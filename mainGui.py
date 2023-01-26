@@ -1,6 +1,7 @@
 import maya.cmds as cmds
 from PySide2 import QtWidgets, QtGui, QtCore
 from maya.app.general.mayaMixin import MayaQWidgetDockableMixin , MayaQWidgetBaseMixin
+from MayaRenameTool.SelectedUI import MSL_Selected
 import os
 import re
 import sys
@@ -1770,10 +1771,17 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.Help_menu.addAction(self.Help_menu_Info)
 
         # Lib Name
-        self.LibName_menu_Act = QtWidgets.QAction(QtGui.QIcon(QtGui.QIcon(os.path.join(root_, "icons/book.svg"))), "Book", self)
+        self.LibName_menu_Act = QtWidgets.QAction(QtGui.QIcon(os.path.join(root_, "icons/book.svg")), "Book", self)
         self.LibName_menu = self.menuBar.addAction(self.LibName_menu_Act)
         self.LibName_menu_Act.setCheckable(True)
         self.LibName_menu_Act.toggled.connect(self.libNameUI)
+
+        # Selected UI
+        self.Selected_menu_Act = QtWidgets.QAction(QtGui.QIcon(os.path.join(root_, "icons/layers.svg")),"Selected", self)
+        self.Selected_menu = self.menuBar.addAction(self.Selected_menu_Act)
+        self.Selected_menu_Act.setCheckable(True)
+        self.Selected_menu_Act.toggled.connect(self.SelectedUIshow)
+
 
     def Save(self):
 
@@ -2630,6 +2638,21 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
         self.search_BTN.popMenu_All.setChecked(True)
         self.replace_BTN.popMenu_All.setChecked(True)
 
+    def SelectedUIshow(self):
+        if cmds.window("CustomMSL_Selected", exists=1):
+            cmds.deleteUI("CustomMSL_Selected")
+
+        if cmds.windowPref("CustomMSL_Selected", exists=1):
+            cmds.windowPref("CustomMSL_Selected", remove=1)
+
+        self.SelectedUI = MSL_Selected()
+        posX = self.geometry().left() - self.SelectedUI.geometry().width()
+        posY = self.y()
+        self.SelectedUI.move(posX, posY)
+
+        self.SelectedUI.show()
+        cmds.window("CustomMSL_Selected", e=1, titleBar=1, toolbox=1, )
+
     def libNameUI(self):
         if cmds.window("libNameID", exists=1):
             cmds.deleteUI("libNameID")
@@ -2710,6 +2733,12 @@ def create_gui():
 
     if cmds.windowPref("libNameID", exists=1):
         cmds.windowPref("libNameID", remove=1)
+
+    if cmds.window("CustomMSL_Selected", exists=1):
+        cmds.deleteUI("CustomMSL_Selected")
+
+    if cmds.windowPref("CustomMSL_Selected", exists=1):
+        cmds.windowPref("CustomMSL_Selected", remove=1)
 
     Dialog = MSL_RenameTool()
     Dialog.show()
