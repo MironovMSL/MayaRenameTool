@@ -10,25 +10,116 @@ import maya.OpenMayaUI as mui
 root_ = os.path.dirname(__file__)
 
 class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
-	"""
-	MSL_Selected(QtGui.QDialog)
-	Custom dialog widget that emulates a few basic features
-	of the Maya MSL_Selected
-	"""
 
 	def __init__(self, *args, **kwargs):
 		super(MSL_Selected, self).__init__(*args, **kwargs)
 
-		self.resize(300,500)
+		self.resize(200,500)
 		self.setObjectName("CustomMSL_Selected")
+		self.setWindowTitle("Selected")
+
+		self.main_layout = QtWidgets.QVBoxLayout(self)
+		self.main_layout.setMargin(2)
+		self.main_layout.setSpacing(2)
+
+		self.menuUI()
+		self.setupUI()
 
 
-		self.layout = QtWidgets.QVBoxLayout(self)
-		self.layout.setMargin(2)
 
+		# self.Test()
+
+
+
+
+	def setupUI(self):
+
+		self.List_BTN = QtWidgets.QPushButton("List")
+		self.list_widgets = QtWidgets.QWidget()
+		self.list_widgets.setFixedWidth(16)
+
+		self.model = QtGui.QStandardItemModel()
+		self.model.setItemPrototype(DagTreeItem())
+
+		self.view = QtWidgets.QTreeView()
+		self.view.setModel(self.model)
+		self.view.header().setVisible(False)
+		self.view.setEditTriggers(self.view.NoEditTriggers)
+		self.view.setSelectionMode(self.view.ExtendedSelection)
+
+		self.list_layot_main = QtWidgets.QHBoxLayout()
+		self.List_view_layout = QtWidgets.QVBoxLayout()
+		self.widget_layout = QtWidgets.QVBoxLayout()
+
+		self.widget_layout.addWidget(self.list_widgets)
+
+		self.List_view_layout.addWidget(self.List_BTN)
+		self.List_view_layout.addWidget(self.view)
+
+		self.list_layot_main.addLayout(self.List_view_layout)
+		self.list_layot_main.addLayout(self.widget_layout)
+
+
+		self.main_layout.addLayout(self.list_layot_main)
+
+		self.List_BTN.clicked.connect(self.set_list)
+		self.view.selectionModel().selectionChanged.connect(self.selectionChanged)
+
+	def set_list(self):
+
+		ListLongName = cmds.ls(sl=1, l=1)
+
+		self.model.clear()
+
+		# excludes = set([
+		# 	'|groundPlane_transform',
+		# 	'|Manipulator1',
+		# 	'|UniversalManip',
+		# 	'|CubeCompass',
+		# ])
 		#
-		# Creating a new menu
+		# roots = self.scanDag(mindepth=1, maxdepth=-1, exclude=excludes)
+
+		node = []
+		for i in ListLongName:
+			item = DagTreeItem(i)
+			node.append(item)
+
+		print(node)
+
+
+		self.model.appendColumn(node)
+
+		# if ListLongName:
+		# 	self.model.appendColumn(list(ListLongName))
+
+		# 	if path and path not in exclude:
+		# 		item = DagTreeItem(dagPath)
 		#
+		# 		# save this item in our mapping
+		# 		itemMap[item.fullname] = item
+		# 		# print(itemMap)
+		# 		# If this item has a parent, add it to that
+		# 		# parent DagTreeItem.
+		# 		# Otherwise, just add it to our top level list
+		# 		parent = itemMap.get(item.parentname)
+		#
+		# 		if parent:
+		# 			parent.appendRow(item)
+		# 			print(parent, "Parent", item)
+		# 		else:
+		# 			nodes.append(item)
+		# 	# print(nodes,"Root")
+		# 	# prune out items that were in our excludes list
+		# 	else:
+		# 		dagIt.prune()
+		#
+		# dagIt.next()
+		# # print(nodes)
+		# return nodes
+
+
+	def menuUI(self):
 		self.menu = QtWidgets.QMenuBar()
 		displayMenu = self.menu.addMenu('Display')
 
@@ -43,12 +134,15 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		sortMenu.addAction(self.sortAction1)
 
 		self.sortAction2 = self.sortActions.addAction('Alphabetical Within Type')
-		self.sortAction2 .setCheckable(True)
-		sortMenu.addAction(self.sortAction2 )
+		self.sortAction2.setCheckable(True)
+		sortMenu.addAction(self.sortAction2)
 
-		self.layout.addWidget(self.menu)
+		# connect sortmethod changes to a slot
+		self.main_layout.addWidget(self.menu)
+		self.sortActions.triggered.connect(self.sortMethodChanged)
 
-		self.model  = QtGui.QStandardItemModel()
+	def Test(self):
+		self.model = QtGui.QStandardItemModel()
 		self.model.setItemPrototype(DagTreeItem())
 
 		# Use our custom sort proxy model to sit between our
@@ -68,18 +162,16 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		view.setSelectionMode(view.ExtendedSelection)
 
 		self.view = view
-		self.layout.addWidget(self.view)
-
+		self.main_layout.addWidget(self.view)
 
 		QtCore.QTimer.singleShot(1, self.initDisplay)
 
 		#
 		# Connections
 		#
-		self.view.expanded.connect(self.nodeExpanded)
+		# self.view.expanded.connect(self.nodeExpanded)
 		self.view.selectionModel().selectionChanged.connect(self.selectionChanged)
-		# connect sortmethod changes to a slot
-		self.sortActions.triggered.connect(self.sortMethodChanged)
+
 
 	def initDisplay(self):
 		"""
@@ -97,6 +189,7 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 		roots = self.scanDag(mindepth=1, maxdepth=-1, exclude=excludes)
 		if roots:
+			print(roots)
 			self.model.appendColumn(roots)
 
 		# apply the current sort method to the model
@@ -126,7 +219,7 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 				if grandChildren:
 					child.appendRows(grandChildren)
 
-				print("child {}, grandChildren {}".format(child, grandChildren))
+				# print("child {}, grandChildren {}".format(child, grandChildren))
 	#
 	def selectionChanged(self):
 		"""
@@ -135,7 +228,7 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		Selects the corresponding nodes in the Maya scene that
 		match the selected view items.
 		"""
-		sel = (self.sortModel.mapToSource(i) for i in self.view.selectedIndexes())
+		sel = self.view.selectedIndexes()
 		nodes = [self.model.itemFromIndex(i).fullname for i in sel]
 		if nodes:
 			cmds.select(nodes, replace=True)
@@ -185,6 +278,7 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 		dagIt.reset(root, om.MItDag.kDepthFirst)
 
+
 		# These will be our final top-most nodes from the search
 		nodes = []
 
@@ -195,6 +289,7 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		while not dagIt.isDone():
 
 			depth = dagIt.depth()
+
 
 			# if the iterator has gone past our target
 			# depth, prune out the tree from here on down,
@@ -207,9 +302,8 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 			elif depth >= mindepth:
 				dagPath = om.MDagPath()
 				dagIt.getPath(dagPath)
-				path = dagPath.fullPathName()
-				# print(path)
 
+				path = dagPath.fullPathName()
 
 				if path and path not in exclude:
 					item = DagTreeItem(dagPath)
@@ -217,23 +311,24 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 					# save this item in our mapping
 					itemMap[item.fullname] = item
-
+					# print(itemMap)
 					# If this item has a parent, add it to that
 					# parent DagTreeItem.
 					# Otherwise, just add it to our top level list
 					parent = itemMap.get(item.parentname)
+
 					if parent:
 						parent.appendRow(item)
+						print(parent, "Parent", item)
 					else:
 						nodes.append(item)
-
+						# print(nodes,"Root")
 				# prune out items that were in our excludes list
 				else:
 					dagIt.prune()
 
 			dagIt.next()
-		print(nodes)
-		print(itemMap)
+		# print(nodes)
 		return nodes
 
 	@classmethod
@@ -295,12 +390,12 @@ class DagTreeProxyModel(QtCore.QSortFilterProxyModel):
 		item = model.itemFromIndex(idx)
 		if self._dag_filters and item:
 			dagObj = item.dagObj
-			print (item,)
+			# print (item,)
 			for dagType in self._dag_filters:
 				if dagObj.hasFn(dagType):
-					print (dagType, True)
+					# print (dagType, True)
 					return True
-			print (False)
+			# print (False)
 			return False
 		return True
 		# return super(DagTreeProxyModel, self).filterAcceptsRow(sourceRow, sourceParent)
@@ -315,6 +410,7 @@ class DagTreeItem(QtGui.QStandardItem):
 		super(DagTreeItem, self).__init__()
 
 		self.dagObj = dagObj
+		print(self.dagObj)
 		self.apiType = om.MFn.kInvalid
 		self.shapeApiType = om.MFn.kInvalid
 
@@ -325,8 +421,10 @@ class DagTreeItem(QtGui.QStandardItem):
 		# Add the sort key string as a UserRole data to
 		# the item. We can then set the model to use this
 		# role when performing sort comparisons.
-		self.setData(self.sortKey, QtCore.Qt.UserRole)
-		self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/layers.svg")))
+		# self.setData(self.sortKey, QtCore.Qt.UserRole)
+		if self.fullname:
+			self.set_icon()
+
 
 
 	def __repr__(self):
@@ -353,17 +451,38 @@ class DagTreeItem(QtGui.QStandardItem):
 		key = '%s%s%s' % (self.apiType, self.shapeApiType, self.name)
 		return key
 
+
+	def set_icon(self, stateShape = None):
+		typeList  = ["mesh", "locator", "joint", "nurbsSurface", "nurbsCurve",
+					 "transform", "camera", "baseLattice", "lattice", "clusterHandle"]
+		type = cmds.nodeType(self.fullname)
+		if self.fullname:
+			if type == "transform":
+
+				shape = cmds.listRelatives(self.fullname, shapes = 1, f= 1)
+				if shape:
+					shapeType = cmds.nodeType(shape[0])
+					type = shapeType
+				else:
+					type = type
+
+			if type in typeList:
+				self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/{}.png".format(type))))
+			else:
+				self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/menuIconConstraints.png")))
+
+
+
 	@property
 	def fullname(self):
 		if not self.dagObj:
 			return ''
-
-		return self.dagObj.fullPathName()
+		return self.dagObj
 
 	@property
 	def name(self):
+		# print(self.fullname)
 		return self.fullname.rsplit('|', 1)[-1]
-
 
 	@property
 	def parentname(self):
