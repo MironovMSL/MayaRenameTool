@@ -8,6 +8,131 @@ import maya.OpenMaya as om
 import maya.OpenMayaUI as mui
 
 root_ = os.path.dirname(__file__)
+typeList  = ["mesh", "nurbsSurface", "nurbsCurve", "joint", "locator", "shape", "follicle",
+			 "transform", "camera", "baseLattice", "lattice", "clusterHandle", "indefined", "TypeAll",
+			 "areaLight", "ambientLight", "directionalLight", "volumeLight", "pointLight", "spotLight"]
+
+
+class ListBTN(QtWidgets.QPushButton):
+	isEmitStateRename = QtCore.Signal(str, bool)
+
+	def __init__(self, name):
+		super(ListBTN, self).__init__()
+
+		self.Style_btn = """
+                                          QPushButton {
+                                          background-color: rgb(70, 70, 70);
+                                          border-style: outset;
+                                          border-width: 1px;
+                                          border-radius: 3px;
+                                          border-color: beige;
+                                          font: bold 14px;
+                                          font: 10pt, Arial;
+                                          color: rgb(255, 255, 255);}
+                                          
+                                          QPushButton:hover{
+         
+                                          background-color: rgb(80, 80, 80);}
+                                          
+                                          QPushButton:pressed {
+                                          background-color: rgb(100, 100, 100);
+                                          border-style: inset;}
+                                       """
+
+		self.setObjectName("ListBTNID")
+		self.setFixedHeight(20)
+		self.setText("List   [  ]")
+		self.creat_context_menu()
+		self.setStyleSheet(self.Style_btn)
+
+
+	def set_Count(self, count):
+		if count == 0:
+			count = ""
+		name = "List   [ {} ]".format(count)
+		self.setText(name)
+
+	def enterEvent(self, event):
+		self.setCursor(QtCore.Qt.PointingHandCursor)
+		super(ListBTN, self).enterEvent(event)
+
+	def leaveEvent(self, event):
+		self.setCursor(QtCore.Qt.ArrowCursor)
+		super(ListBTN, self).leaveEvent(event)
+
+	def mousePressEvent(self, event):
+		super(ListBTN, self).mousePressEvent(event)
+
+		if event.buttons() == QtCore.Qt.RightButton:
+			self.popMenu.exec_(self.mapToGlobal(event.pos()))
+
+		self.setStyleSheet(self.Style_btn)
+
+	def creat_context_menu(self):
+		self.popMenu = QtWidgets.QMenu(self)
+		# self.popMenu.setTearOffEnabled(True)
+		self.popMenu.setTitle("List Seting")
+
+
+		# in Selected
+		self.action_group_Buttons = QtWidgets.QActionGroup(self)
+
+		self.popMenu_Selected = QtWidgets.QAction("Selected", self)
+		self.popMenu_Selected.setCheckable(True)
+		self.popMenu_Selected.setChecked(True)
+		self.popMenu.addAction(self.popMenu_Selected)
+		self.popMenu_Selected.triggered.connect(self.State_Selected)
+
+		# in Hierarchy
+		self.popMenu_Hierarchy = QtWidgets.QAction("Hierarchy", self)
+		self.popMenu_Hierarchy.setCheckable(True)
+		# self.popMenu_Hierarchy.setChecked(True)
+		self.popMenu.addAction(self.popMenu_Hierarchy)
+		self.popMenu_Hierarchy.triggered.connect(self.State_Hierarchy)
+
+		self.action_group_Buttons.addAction(self.popMenu_Selected)
+		self.action_group_Buttons.addAction(self.popMenu_Hierarchy)
+
+	def State_Selected(self, state):
+		self.isEmitStateRename.emit("Selected", state)
+
+	def State_Hierarchy(self, state):
+		self.isEmitStateRename.emit("Selected_object", state)
+
+class ButtonType(QtWidgets.QPushButton):
+
+	isTypeList = QtCore.Signal(list)
+	def __init__(self, TypeIcon, TypeList = []):
+		super(ButtonType, self).__init__()
+
+		self.TypeIcon = TypeIcon
+		self.TypeList = TypeList
+
+		self.setObjectName(TypeIcon + "id")
+		self.setFixedSize(16, 16)
+		self.set_icon()
+
+	def set_icon(self):
+
+		if self.TypeIcon in typeList:
+			self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/{}.png".format(self.TypeIcon))))
+		else:
+			self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/menuIconConstraints.png")))
+
+	def mouseReleaseEvent(self, event):
+		super(ButtonType, self).mouseReleaseEvent(event)
+		self.isTypeList.emit(self.TypeList)
+
+	def enterEvent(self, event):
+		self.setCursor(QtCore.Qt.PointingHandCursor)
+		super(ButtonType, self).enterEvent(event)
+
+	def leaveEvent(self, event):
+		self.setCursor(QtCore.Qt.ArrowCursor)
+		super(ButtonType, self).leaveEvent(event)
+
+
+
 
 class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
@@ -22,42 +147,42 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		self.main_layout.setMargin(2)
 		self.main_layout.setSpacing(2)
 
-		self.menuUI()
+		# self.menuUI()
 		self.setupUI()
 
-
+		# QtCore.QTimer.singleShot(1, self.set_list)
 
 		# self.Test()
 
-
-
-
 	def setupUI(self):
 
-		self.List_BTN = QtWidgets.QPushButton("List")
+		self.List_BTN = ListBTN("List")
 		self.list_widgets = QtWidgets.QWidget()
 		self.list_widgets.setFixedWidth(16)
 
 		self.model = QtGui.QStandardItemModel()
 		self.model.setItemPrototype(DagTreeItem())
 
-		self.view = QtWidgets.QTreeView()
+		self.view = QtWidgets.QListView()
 		self.view.setModel(self.model)
-		self.view.header().setVisible(False)
+		# self.view.header().setVisible(False)
 		self.view.setEditTriggers(self.view.NoEditTriggers)
 		self.view.setSelectionMode(self.view.ExtendedSelection)
 
 		self.list_layot_main = QtWidgets.QHBoxLayout()
 		self.List_view_layout = QtWidgets.QVBoxLayout()
-		self.widget_layout = QtWidgets.QVBoxLayout()
+		self.widget_layout = QtWidgets.QVBoxLayout(self.list_widgets)
+		self.widget_layout.setMargin(0)
+		self.widget_layout.setSpacing(2)
+		self.widget_layout.setAlignment(QtCore.Qt.AlignTop)
 
-		self.widget_layout.addWidget(self.list_widgets)
+
 
 		self.List_view_layout.addWidget(self.List_BTN)
 		self.List_view_layout.addWidget(self.view)
 
 		self.list_layot_main.addLayout(self.List_view_layout)
-		self.list_layot_main.addLayout(self.widget_layout)
+		self.list_layot_main.addWidget(self.list_widgets)
 
 
 		self.main_layout.addLayout(self.list_layot_main)
@@ -65,58 +190,124 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		self.List_BTN.clicked.connect(self.set_list)
 		self.view.selectionModel().selectionChanged.connect(self.selectionChanged)
 
-	def set_list(self):
+	def gettypeLists(self, Sellist = []):
 
-		ListLongName = cmds.ls(sl=1, l=1)
+		librLisr = {}
+		shapelist =[]
+
+		librLisr["TypeAll"] = Sellist
+
+		if Sellist:
+			for i in Sellist:
+				type  = cmds.nodeType(i)
+
+				if type == "transform":
+					shape = cmds.listRelatives(i, shapes=1, f=1)
+
+					if shape:
+						shape = shape[0]
+						shapeType = cmds.nodeType(shape)
+						if shapeType:
+
+							shapelist.append(shape)
+							if shapeType in typeList:
+								if shapeType == "baseLattice":
+									shapeType = "lattice"
+
+								elif shapeType in ["areaLight", "ambientLight", "directionalLight", "volumeLight", "pointLight", "spotLight"]:
+
+									shapeType = "ambientLight"
+
+								if shapeType in librLisr.keys():
+									librLisr[shapeType].append(i)
+
+									librLisr["shape"].append(shape)
+								else:
+									librLisr[shapeType] = [i]
+									librLisr["shape"] = [shape]
+
+					else:
+						if type in librLisr.keys() :
+							librLisr[type].append(i)
+						else:
+							librLisr[type] =  [i]
+
+				else:
+					if type == "joint":
+						if type in librLisr.keys() :
+							librLisr[type].append(i)
+						else:
+							librLisr[type] =  [i]
+
+					elif i in shapelist:
+						continue
+					else:
+						if type in typeList:
+							shapelist.append(i)
+						else:
+							if "indefined" in librLisr.keys():
+								librLisr["indefined"].append(i)
+							else:
+								librLisr["indefined"] = [i]
+
+
+		librLisr["shape"] = list(set(shapelist))
+
+		self.Creat_ButtonType(librLisr)
+
+	def Creat_ButtonType(self, library = {}):
+
+		for i in library.keys():
+			if library[i]:
+				btn = ButtonType(i, library[i])
+
+				btn.isTypeList.connect(self.viewTypelist)
+				self.widget_layout.addWidget(btn)
+
+	def viewTypelist(self, TypeList):
 
 		self.model.clear()
 
-		# excludes = set([
-		# 	'|groundPlane_transform',
-		# 	'|Manipulator1',
-		# 	'|UniversalManip',
-		# 	'|CubeCompass',
-		# ])
-		#
-		# roots = self.scanDag(mindepth=1, maxdepth=-1, exclude=excludes)
+		node = []
+		for i in TypeList:
+			item = DagTreeItem(i)
+			node.append(item)
+
+		self.model.appendColumn(node)
+		cmds.select(TypeList, r=1)
+		self.List_BTN.set_Count(len(TypeList))
+
+	def set_list(self):
+		Count = self.widget_layout.count()
+		if Count:
+			for i in range(Count):
+				Widget = self.widget_layout.itemAt(i).widget()
+
+				Widget.deleteLater()
+
+
+		if self.List_BTN.popMenu_Selected.isChecked():
+			ListLongName    = cmds.ls(sl=1, l=1)
+
+		elif self.List_BTN.popMenu_Hierarchy.isChecked():
+			ListLong_Sel = cmds.ls(sl=1, l=1)
+			ListLong_Hi = cmds.ls(sl=1, dag=1, l=1)
+			ListLong_Hi.extend(ListLong_Sel)
+			ListLongName = set(ListLong_Hi)
+
+
+
+		self.gettypeLists(ListLongName)
+		self.model.clear()
 
 		node = []
 		for i in ListLongName:
 			item = DagTreeItem(i)
 			node.append(item)
 
-		print(node)
-
-
 		self.model.appendColumn(node)
+		self.List_BTN.set_Count(len(ListLongName))
 
-		# if ListLongName:
-		# 	self.model.appendColumn(list(ListLongName))
-
-		# 	if path and path not in exclude:
-		# 		item = DagTreeItem(dagPath)
-		#
-		# 		# save this item in our mapping
-		# 		itemMap[item.fullname] = item
-		# 		# print(itemMap)
-		# 		# If this item has a parent, add it to that
-		# 		# parent DagTreeItem.
-		# 		# Otherwise, just add it to our top level list
-		# 		parent = itemMap.get(item.parentname)
-		#
-		# 		if parent:
-		# 			parent.appendRow(item)
-		# 			print(parent, "Parent", item)
-		# 		else:
-		# 			nodes.append(item)
-		# 	# print(nodes,"Root")
-		# 	# prune out items that were in our excludes list
-		# 	else:
-		# 		dagIt.prune()
-		#
-		# dagIt.next()
-		# # print(nodes)
-		# return nodes
 
 
 	def menuUI(self):
@@ -189,7 +380,7 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 		roots = self.scanDag(mindepth=1, maxdepth=-1, exclude=excludes)
 		if roots:
-			print(roots)
+
 			self.model.appendColumn(roots)
 
 		# apply the current sort method to the model
@@ -319,7 +510,7 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 					if parent:
 						parent.appendRow(item)
-						print(parent, "Parent", item)
+
 					else:
 						nodes.append(item)
 						# print(nodes,"Root")
@@ -357,7 +548,7 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 class DagTreeProxyModel(QtCore.QSortFilterProxyModel):
 
 	DAG_TYPES = {
-		'NURBS Objects'	: [om.MFn.kNurbsSurface, om.MFn.kNurbsCurve],
+		'NURBS Objects'  	: [om.MFn.kNurbsSurface, om.MFn.kNurbsCurve],
 		'Polygon Objects'	: [om.MFn.kPolyCreator],
 		'Cameras'			: [om.MFn.kCamera],
 		'Lights'			: [om.MFn.kLight],
@@ -410,7 +601,7 @@ class DagTreeItem(QtGui.QStandardItem):
 		super(DagTreeItem, self).__init__()
 
 		self.dagObj = dagObj
-		print(self.dagObj)
+
 		self.apiType = om.MFn.kInvalid
 		self.shapeApiType = om.MFn.kInvalid
 
@@ -453,8 +644,8 @@ class DagTreeItem(QtGui.QStandardItem):
 
 
 	def set_icon(self, stateShape = None):
-		typeList  = ["mesh", "locator", "joint", "nurbsSurface", "nurbsCurve",
-					 "transform", "camera", "baseLattice", "lattice", "clusterHandle"]
+		# typeList  = ["mesh", "locator", "joint", "nurbsSurface", "nurbsCurve",
+		# 			 "transform", "camera", "baseLattice", "lattice", "clusterHandle"]
 		type = cmds.nodeType(self.fullname)
 		if self.fullname:
 			if type == "transform":
