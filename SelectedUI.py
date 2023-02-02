@@ -10,7 +10,8 @@ import maya.OpenMayaUI as mui
 root_ = os.path.dirname(__file__)
 typeList  = ["mesh", "nurbsSurface", "nurbsCurve", "joint", "locator", "shape", "follicle",
 			 "transform", "camera", "baseLattice", "lattice", "clusterHandle", "indefined", "TypeAll",
-			 "areaLight", "ambientLight", "directionalLight", "volumeLight", "pointLight", "spotLight"]
+			 "areaLight", "ambientLight", "directionalLight", "volumeLight", "pointLight", "spotLight",
+			 "duplicate", "Ru"]
 
 
 class ListBTN(QtWidgets.QPushButton):
@@ -106,11 +107,64 @@ class ButtonType(QtWidgets.QPushButton):
 		super(ButtonType, self).__init__()
 
 		self.TypeIcon = TypeIcon
-		self.TypeList = TypeList
+		self.list = TypeList
+		self.stateMenu = False
 
 		self.setObjectName(TypeIcon + "id")
 		self.setFixedSize(16, 16)
 		self.set_icon()
+		self.setToolTip(TypeIcon)
+		if TypeIcon in ["duplicate", "Ru"]:
+			self.creat_context_menu()
+			self.stateMenu = True
+
+		self.set_TypeList()
+
+
+	def set_TypeList(self):
+
+		self.TypeList = self.list
+
+		if self.stateMenu:
+			if self.popMenu_Shape.isChecked():
+				self.TypeList = self.list
+			else:
+				typeList = ["mesh", "nurbsSurface", "nurbsCurve", "locator", "follicle","camera", "baseLattice",
+							"lattice", "clusterHandle","areaLight", "ambientLight", "directionalLight",
+							"volumeLight", "pointLight", "spotLight"]
+
+				TypeListNoShape = []
+
+				for i in self.TypeList:
+					if cmds.nodeType(i) not in typeList:
+						TypeListNoShape.append(i)
+
+
+				self.TypeList = TypeListNoShape
+
+
+
+
+	def creat_context_menu(self):
+		self.popMenu = QtWidgets.QMenu(self)
+		self.popMenu.setTearOffEnabled(True)
+		self.popMenu.setTitle(self.TypeIcon)
+
+		self.popMenu_Shape = QtWidgets.QAction("shape", self)
+		self.popMenu_Shape.setCheckable(True)
+		self.popMenu.addAction(self.popMenu_Shape)
+		self.popMenu_Shape.triggered.connect(self.SetShape)
+
+	def SetShape(self):
+		self.set_TypeList()
+
+		if self.popMenu_Shape.isChecked():
+			self.isTypeList.emit(self.TypeList)
+
+		else:
+			self.isTypeList.emit(self.TypeList)
+
+
 
 	def set_icon(self):
 
@@ -123,6 +177,13 @@ class ButtonType(QtWidgets.QPushButton):
 		super(ButtonType, self).mouseReleaseEvent(event)
 		self.isTypeList.emit(self.TypeList)
 
+	def mousePressEvent(self, event):
+		super(ButtonType, self).mousePressEvent(event)
+
+		if self.stateMenu:
+			if event.buttons() == QtCore.Qt.RightButton:
+				self.popMenu.exec_(self.mapToGlobal(event.pos()))
+
 	def enterEvent(self, event):
 		self.setCursor(QtCore.Qt.PointingHandCursor)
 		super(ButtonType, self).enterEvent(event)
@@ -130,9 +191,6 @@ class ButtonType(QtWidgets.QPushButton):
 	def leaveEvent(self, event):
 		self.setCursor(QtCore.Qt.ArrowCursor)
 		super(ButtonType, self).leaveEvent(event)
-
-
-
 
 class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
@@ -147,8 +205,10 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		self.main_layout.setMargin(2)
 		self.main_layout.setSpacing(2)
 
-		# self.menuUI()
+		self.menuUI()
 		self.setupUI()
+
+
 
 		# QtCore.QTimer.singleShot(1, self.set_list)
 
@@ -190,12 +250,106 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		self.List_BTN.clicked.connect(self.set_list)
 		self.view.selectionModel().selectionChanged.connect(self.selectionChanged)
 
+	def menuUI(self):
+		self.menu = QtWidgets.QMenuBar()
+		self.EditMenu = self.menu.addMenu(QtGui.QIcon(os.path.join(root_, "icons/tool.svg")), "Edit")
+		# self.EditMenu.setTearOffEnabled(True)
+
+		self.Edit_menu_duplicate = QtWidgets.QAction("duplicate name", self)
+		self.Edit_menu_duplicate.setIcon(QtGui.QIcon(os.path.join(root_, "icons/duplicate.png")))
+		self.EditMenu.addAction(self.Edit_menu_duplicate)
+		self.Edit_menu_duplicate.triggered.connect(self.GetDuplicate)
+
+		self.Edit_menu_Ru = QtWidgets.QAction("Ru name", self)
+		self.Edit_menu_Ru.setIcon(QtGui.QIcon(os.path.join(root_, "icons/Ru.png")))
+		self.EditMenu.addAction(self.Edit_menu_Ru)
+		self.Edit_menu_Ru.triggered.connect(self.GetRu)
+
+
+		# sortMenu = EditMenu.addMenu('Sort Order')
+		#
+		# # Create an exclusive set of sorting mode options
+		# self.sortActions = QtWidgets.QActionGroup(sortMenu)
+		#
+		# self.sortAction1 = self.sortActions.addAction('Scene Hierarchy')
+		# self.sortAction1.setCheckable(True)
+		# self.sortAction1.setChecked(True)
+		# sortMenu.addAction(self.sortAction1)
+		#
+		# self.sortAction2 = self.sortActions.addAction('Alphabetical Within Type')
+		# self.sortAction2.setCheckable(True)
+		# sortMenu.addAction(self.sortAction2)
+
+		# connect sortmethod changes to a slot
+		self.main_layout.addWidget(self.menu)
+		# self.sortActions.triggered.connect(self.sortMethodChanged)
+	def GetRu(self):
+		print("ru")
+	def GetDuplicate(self):
+
+
+		ListLong_Sel = cmds.ls(sl=1, l=1)
+		ListLong_Hi = cmds.ls(sl=1, dag=1, l=1)
+		ListLong_Hi.extend(ListLong_Sel)
+		ListLongName = list(set(ListLong_Hi))
+
+		newList = []
+		librLisr = {}
+		for num, a in enumerate(ListLongName, start=1):
+			shortName = self.get_short_Name(a)
+
+			for i in ListLongName[num:]:
+				shortName2 = self.get_short_Name(i)
+				if shortName == shortName2:
+					if a not in newList:
+
+						newList.append(a)
+					if i not in newList:
+
+						newList.append(i)
+
+		librLisr["duplicate"] = newList
+
+		Count = self.widget_layout.count()
+		if Count:
+			for i in range(Count):
+				Widget = self.widget_layout.itemAt(i).widget()
+				WidgetName = Widget.objectName()
+
+				if WidgetName in ["duplicateid", "Ruid"]:
+					Widget.deleteLater()
+
+		if newList:
+
+			self.Creat_ButtonType(librLisr)
+
+			Count = self.widget_layout.count()
+			if Count:
+				for i in range(Count):
+					Widget = self.widget_layout.itemAt(i).widget()
+					WidgetName = Widget.objectName()
+
+					if WidgetName in ["duplicateid"]:
+						cmds.select(Widget.TypeList, r=1)
+
+
+
+		else:
+
+			print("No Duplicate Name")
+
+
+	def get_short_Name(self, longName):
+		shortName = longName.rpartition("|")[-1]
+		return shortName
+
+
 	def gettypeLists(self, Sellist = []):
 
 		librLisr = {}
 		shapelist =[]
 
-		librLisr["TypeAll"] = Sellist
+		librLisr["TypeAll"] = list(Sellist)
 
 		if Sellist:
 			for i in Sellist:
@@ -252,7 +406,7 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 
 		librLisr["shape"] = list(set(shapelist))
-
+		print(librLisr)
 		self.Creat_ButtonType(librLisr)
 
 	def Creat_ButtonType(self, library = {}):
@@ -283,6 +437,7 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 			for i in range(Count):
 				Widget = self.widget_layout.itemAt(i).widget()
 
+
 				Widget.deleteLater()
 
 
@@ -307,30 +462,6 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 		self.model.appendColumn(node)
 		self.List_BTN.set_Count(len(ListLongName))
-
-
-
-	def menuUI(self):
-		self.menu = QtWidgets.QMenuBar()
-		displayMenu = self.menu.addMenu('Display')
-
-		sortMenu = displayMenu.addMenu('Sort Order')
-
-		# Create an exclusive set of sorting mode options
-		self.sortActions = QtWidgets.QActionGroup(sortMenu)
-
-		self.sortAction1 = self.sortActions.addAction('Scene Hierarchy')
-		self.sortAction1.setCheckable(True)
-		self.sortAction1.setChecked(True)
-		sortMenu.addAction(self.sortAction1)
-
-		self.sortAction2 = self.sortActions.addAction('Alphabetical Within Type')
-		self.sortAction2.setCheckable(True)
-		sortMenu.addAction(self.sortAction2)
-
-		# connect sortmethod changes to a slot
-		self.main_layout.addWidget(self.menu)
-		self.sortActions.triggered.connect(self.sortMethodChanged)
 
 	def Test(self):
 		self.model = QtGui.QStandardItemModel()
@@ -362,29 +493,6 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		#
 		# self.view.expanded.connect(self.nodeExpanded)
 		self.view.selectionModel().selectionChanged.connect(self.selectionChanged)
-
-
-	def initDisplay(self):
-		"""
-		Initialize the model with the root world items
-		"""
-		self.model.clear()
-
-
-		excludes = set([
-			'|groundPlane_transform',
-			'|Manipulator1',
-			'|UniversalManip',
-			'|CubeCompass',
-		])
-
-		roots = self.scanDag(mindepth=1, maxdepth=-1, exclude=excludes)
-		if roots:
-
-			self.model.appendColumn(roots)
-
-		# apply the current sort method to the model
-		self.sortMethodChanged()
 
 	def nodeExpanded(self, idx):
 		"""
@@ -522,29 +630,6 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		# print(nodes)
 		return nodes
 
-	@classmethod
-	def showOutliner(cls):
-		"""
-		showOutliner() -> (str dockLayout, Outliner widget)
-		Creates a Outliner widget inside of a Maya dockControl.
-		Returns the dockControl path, and the Outliner widget.
-		"""
-		win = cls(parent=getMainWindow())
-		size = win.size()
-
-		name = mui.MQtUtil.fullName(long(sip.unwrapinstance(win)))
-
-		dock = cmds.dockControl(
-			allowedArea='all',
-			area='left',
-			floating=True,
-			content=name,
-			width=size.width(),
-			height=size.height(),
-			label='Custom Outliner')
-
-		return dock, win
-	#
 class DagTreeProxyModel(QtCore.QSortFilterProxyModel):
 
 	DAG_TYPES = {
