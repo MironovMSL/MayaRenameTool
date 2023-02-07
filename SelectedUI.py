@@ -3,16 +3,338 @@ from PySide2 import QtWidgets, QtGui, QtCore
 from maya.app.general.mayaMixin import MayaQWidgetDockableMixin , MayaQWidgetBaseMixin
 import os
 import sys
+import json
 
 import maya.OpenMaya as om
 import maya.OpenMayaUI as mui
+
+
+
+
 
 root_ = os.path.dirname(__file__)
 typeList  = ["mesh", "nurbsSurface", "nurbsCurve", "joint", "locator", "shape", "follicle",
 			 "transform", "camera", "baseLattice", "lattice", "clusterHandle", "indefined", "TypeAll",
 			 "areaLight", "ambientLight", "directionalLight", "volumeLight", "pointLight", "spotLight",
-			 "duplicate", "Ru"]
+			 "duplicate", "Ru", "Constraint",
+			 "parentConstraint", "pointConstraint", "orientConstraint", "scaleConstraint","aimConstraint", "poleVectorConstraint"]
 
+
+class Buttons_set_name(QtWidgets.QPushButton):
+    itClickedName = QtCore.Signal(str)
+
+    def __init__(self, text= ""):
+        super(Buttons_set_name, self).__init__()
+
+        self._text = text
+        self.setObjectName(self._text)
+        self.setFixedSize(40, 25)
+        self.setText(self._text)
+
+        # LineEdit setVisible
+        self.NameLineEdit = QtWidgets.QLineEdit()
+        self.NameLineEdit.setText(self._text)
+        self.NameLineEdit.setAlignment(QtCore.Qt.AlignHCenter)
+
+        self.NameLineEdit.setVisible(0)
+
+        self.NameLineEdit.returnPressed.connect(self.setNewMame)
+
+        self.main_layout = QtWidgets.QVBoxLayout()
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
+        self.setLayout(self.main_layout)
+
+        self.main_layout.addWidget(self.NameLineEdit)
+
+    def setNewMame (self):
+
+        btnText = self.text()
+        text    = self.NameLineEdit.text()
+        self.setText(text)
+
+
+        self.Rename_bnt()
+
+        print("Rename button [{}] in [{}]".format( btnText, text ))
+
+    def enterEvent(self,event):
+        self.setCursor(QtCore.Qt.PointingHandCursor)
+        super(Buttons_set_name, self).enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.setCursor(QtCore.Qt.ArrowCursor)
+        super(Buttons_set_name, self).leaveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        super(Buttons_set_name, self).mouseReleaseEvent(event)
+        self.itClickedName.emit(self.text())
+
+    def mousePressEvent(self, event):
+
+        super(Buttons_set_name, self).mousePressEvent(event)
+        if event.buttons() == QtCore.Qt.RightButton:
+
+            self.creat_context_menu()
+            self.popMenu.exec_(self.mapToGlobal(event.pos()))
+
+
+        if event.buttons() != QtCore.Qt.MidButton:
+            return
+
+        self.setVisible(0)
+        mimeData = NameMIMEData()
+        mimeData.Name_Btn = self.text()
+
+        # Creat ghost image
+        self.pixmap = self.grab()
+        painter = QtGui.QPainter(self.pixmap)
+
+        painter.setCompositionMode(painter.CompositionMode_DestinationIn)
+        painter.fillRect(self.pixmap.rect(), QtGui.QColor(80, 80, 80, 100))
+        painter.end
+
+        # start drag and drop
+        drag = QtGui.QDrag(self)
+        drag.setMimeData(mimeData)
+        drag.setPixmap(self.pixmap)
+        drag.setHotSpot(event.pos())
+
+
+        drag.exec_(QtCore.Qt.LinkAction | QtCore.Qt.MoveAction)
+
+    def creat_context_menu(self):
+
+        self.popMenu = QtWidgets.QMenu(self)
+
+        self.popMenuAdd = QtWidgets.QAction("Rename", self)
+        self.popMenu.addAction(self.popMenuAdd)
+        self.popMenuAdd.triggered.connect(self.Rename_bnt)
+
+        self.popMenuDel = QtWidgets.QAction("Delete", self)
+        self.popMenu.addAction(self.popMenuDel)
+        self.popMenuDel.triggered.connect(self.Delete_btn)
+
+    def Rename_bnt(self):
+        vis = self.NameLineEdit.isVisible()
+        if vis:
+            self.NameLineEdit.setVisible(0)
+
+        else:
+            self.NameLineEdit.setVisible(1)
+            self.NameLineEdit.setFocus()
+
+    def Delete_btn(self):
+        self.deleteLater()
+        print("Delete button [{}]".format(self.text()))
+class Buttons_ADD (QtWidgets.QPushButton):
+
+    itToggleBox = QtCore.Signal(bool)
+
+    def __init__(self):
+        super(Buttons_ADD, self).__init__()
+
+        self.setObjectName("AddNameID")
+        # self.setStyleSheet("background-color: rgba(255, 255, 255,50);")
+        # self.setText("add")
+        self.setMaximumSize(20,30)
+        self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/plus.svg")))
+        self.CreatContextMenu()
+
+    def enterEvent(self,event):
+        self.setCursor(QtCore.Qt.PointingHandCursor)
+        super(Buttons_ADD, self).enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.setCursor(QtCore.Qt.ArrowCursor)
+        super(Buttons_ADD, self).leaveEvent(event)
+
+    def mousePressEvent(self, event):
+
+        if event.buttons() == QtCore.Qt.RightButton:
+            self.popMenu.exec_(self.mapToGlobal(event.pos()))
+
+        super(Buttons_ADD, self).mousePressEvent(event)
+
+    def CreatContextMenu(self):
+
+        self.popMenu = QtWidgets.QMenu(self)
+        # self.popMenu.setTearOffEnabled(True)
+        self.popMenu.setTitle("add state")
+
+        self.popMenuButtons = QtWidgets.QAction("Button", self)
+        self.popMenu.addAction(self.popMenuButtons)
+        self.popMenuButtons.setCheckable(True)
+        self.popMenuButtons.setChecked(True)
+        self.popMenuButtons.triggered.connect(self.Add_button)
+
+        self.popMenuCategory = QtWidgets.QAction("Category", self)
+        self.popMenu.addAction(self.popMenuCategory)
+        self.popMenuCategory.setCheckable(True)
+        self.popMenuCategory.triggered.connect(self.Add_Category)
+
+        self.action_group_Buttons = QtWidgets.QActionGroup(self)
+
+        self.action_group_Buttons.addAction(self.popMenuButtons)
+        self.action_group_Buttons.addAction(self.popMenuCategory)
+
+    def Add_Category(self, state):
+
+        self.popMenuCategory.setChecked(True)
+        self.popMenuButtons.setChecked(False)
+
+        self.itToggleBox.emit(False)
+
+    def Add_button(self, state):
+
+        self.popMenuButtons.setChecked(True)
+        self.popMenuCategory.setChecked(False)
+
+        self.itToggleBox.emit(True)
+class SetScrollArea(QtWidgets.QScrollArea):
+
+    def __init__(self, parent =None):
+        super(SetScrollArea, self).__init__(parent)
+
+        self.index = int
+
+        scroll_style = """QScrollBar:horizontal {
+                            background: rgb(10, 10, 10);
+                            height: 5px;
+                            margin: 0px 0 0 0px;
+                        }
+                        QScrollBar::handle:horizontal {
+                            border: 1px rgb(0,0,0);
+                            background: rgb(80, 80, 80);
+                        }
+                        """
+
+        self.setObjectName("SetScrollAreaid")
+        self.setMinimumSize(100, 30)
+        self.setFixedHeight(30)
+
+        self.setWidgetResizable(True)
+        self.setAcceptDrops(True)
+
+        self.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        # self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+
+        self.scrollbar = QtWidgets.QScrollBar()
+        self.scrollbar.setStyleSheet(scroll_style)
+        self.setHorizontalScrollBar(self.scrollbar)
+
+        self.scroll_area_widget = QtWidgets.QWidget()
+        self.setWidget(self.scroll_area_widget)
+
+
+        self.scroll_area_widget_layout = QtWidgets.QHBoxLayout(self.scroll_area_widget)
+        self.scroll_area_widget_layout.setContentsMargins(0, 0, 0, 0)
+        self.scroll_area_widget_layout.setSpacing(2)
+        self.scroll_area_widget_layout.setAlignment(QtCore.Qt.AlignLeft)
+        self.scroll_area_widget_layout.setAlignment(QtCore.Qt.AlignTop)
+
+
+
+    def receiveSignal(self, text):
+        self.itClickedName.emit(text)
+
+    def dragLeaveEvent(self, event):
+
+        Count = self.scroll_area_widget_layout.count()
+        for num, i in enumerate(range(Count), start=1):
+            widget = self.scroll_area_widget_layout.itemAt(i).widget()
+            widetName = widget.objectName()
+            if widetName == "Separator":
+
+                continue
+            visibl = widget.isVisible()
+            if visibl == False:
+                widget.setVisible(1)
+                self.scroll_area_widget_layout.insertWidget(self.index, widget)
+
+        self.Separator.setVisible(0)
+
+    def dragEnterEvent(self, event):
+        event.acceptProposedAction()
+
+        event.source().setVisible(0)
+        self.Separator.setVisible(1)
+
+        indexX   = event.pos().x()//40
+
+        self.scroll_area_widget_layout.insertWidget(indexX, self.Separator)
+        self.index = indexX
+
+    def dragMoveEvent(self, event):
+        event.acceptProposedAction()
+
+        Count = self.scroll_area_widget_layout.count()
+        for num, i in enumerate(range(Count), start=1):
+            item = self.scroll_area_widget_layout.itemAt(i)
+            widet = item.widget().objectName()
+            visibl = item.widget().isVisible()
+
+        self.Separator.setVisible(1)
+        indexX = event.pos().x() // 40
+
+
+        self.scroll_area_widget_layout.insertWidget(indexX, self.Separator)
+        self.index = indexX
+
+    def dropEvent(self, event):
+
+        mimeData = event.mimeData()
+        if mimeData.text():
+            Name = mimeData.text()
+        else:
+            Name = mimeData.Name_Btn
+
+        Count = self.scroll_area_widget_layout.count()
+        indexX = (event.pos().x() // 50)
+
+
+
+        listW = []
+
+        Index = int
+        for i in range(Count):
+            item = self.scroll_area_widget_layout.itemAt(i)
+            widet = item.widget().objectName()
+            if Name == widet:
+                Index = i
+
+            listW.append(widet)
+
+        self.Separator.setVisible(0)
+
+        if Name in listW:
+
+            widet = self.scroll_area_widget_layout.itemAt(Index).widget()
+            widet.setVisible(1)
+            self.scroll_area_widget_layout.insertWidget(indexX, widet)
+
+            # print("this name [{}] already exists in [{}]".format(Name, self.objectName()))
+
+
+        else:
+
+            self.fast_access_BTN = Buttons_fast_name(Name)
+            self.scroll_area_widget_layout.insertWidget(indexX, self.fast_access_BTN)
+            self.fast_access_BTN.itClickedName.connect(self.receiveSignal)
+
+            Count = self.scroll_area_widget_layout.count()
+
+            for num, i in enumerate(range(Count), start=1):
+
+                item = self.scroll_area_widget_layout.itemAt(i)
+                widet = item.widget().objectName()
+
+
+            event.source().setVisible(1)
+
+            # print("this name [{}] move in [{}]".format(Name, self.objectName()))
 
 class ListBTN(QtWidgets.QPushButton):
 	isEmitStateRename = QtCore.Signal(str, bool)
@@ -147,7 +469,7 @@ class ButtonType(QtWidgets.QPushButton):
 
 	def creat_context_menu(self):
 		self.popMenu = QtWidgets.QMenu(self)
-		self.popMenu.setTearOffEnabled(True)
+		# self.popMenu.setTearOffEnabled(True)
 		self.popMenu.setTitle(self.TypeIcon)
 
 		self.popMenu_Shape = QtWidgets.QAction("shape", self)
@@ -197,7 +519,8 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 	def __init__(self, *args, **kwargs):
 		super(MSL_Selected, self).__init__(*args, **kwargs)
 
-		self.resize(200,500)
+		self.setMinimumSize(150,200)
+		self.resize(200,400)
 		self.setObjectName("CustomMSL_Selected")
 		self.setWindowTitle("Selected")
 
@@ -208,17 +531,13 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		self.menuUI()
 		self.setupUI()
 
-
+		self.setupUI_set()
 
 		# QtCore.QTimer.singleShot(1, self.set_list)
-
-		# self.Test()
 
 	def setupUI(self):
 
 		self.List_BTN = ListBTN("List")
-		self.list_widgets = QtWidgets.QWidget()
-		self.list_widgets.setFixedWidth(16)
 
 		self.model = QtGui.QStandardItemModel()
 		self.model.setItemPrototype(DagTreeItem())
@@ -229,26 +548,100 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		self.view.setEditTriggers(self.view.NoEditTriggers)
 		self.view.setSelectionMode(self.view.ExtendedSelection)
 
+		# ---------------------------------
+		scroll_styleV = """QScrollBar:vertical {
+		                            background: rgb(10, 10, 10);
+		                            width: 5px;
+		                            margin: 0px 0 0 0px;
+		                            
+		                        }
+		                        QScrollBar::handle:vertical {
+		                            border: 1px rgb(0,0,0);
+		                            background: rgb(80, 80, 80);
+		                        }
+		                        """
+		scroll_styleH = """QScrollBar:horizontal {
+		                            background: rgb(10, 10, 10);
+		                            height: 5px;
+		                            margin: 0px 0 0 0px;
+		                        }
+		                        QScrollBar::handle:horizontal {
+		                            border: 1px rgb(0,0,0);
+		                            background: rgb(80, 80, 80);
+		                        }
+		                        """
+
+		self.scrollbarV = QtWidgets.QScrollBar()
+		self.scrollbarH= QtWidgets.QScrollBar()
+		self.scrollbarV.setStyleSheet(scroll_styleV)
+		self.scrollbarH.setStyleSheet(scroll_styleH)
+		self.view.setVerticalScrollBar(self.scrollbarV)
+		self.view.setHorizontalScrollBar(self.scrollbarH)
+		#------------------------------------------
+
+
 		self.list_layot_main = QtWidgets.QHBoxLayout()
+
 		self.List_view_layout = QtWidgets.QVBoxLayout()
+
+		self.list_widgets = QtWidgets.QWidget()
+		self.list_widgets.setFixedWidth(16)
+		self.clear_BTN = QtWidgets.QPushButton("( )")
+		self.clear_BTN.setFixedSize(16,20)
+		self.clear_BTN.clicked.connect(self.clear_Widget_listType)
+
+		self.List_Type = QtWidgets.QVBoxLayout()
+
 		self.widget_layout = QtWidgets.QVBoxLayout(self.list_widgets)
 		self.widget_layout.setMargin(0)
 		self.widget_layout.setSpacing(2)
 		self.widget_layout.setAlignment(QtCore.Qt.AlignTop)
 
+		self.List_Type.addWidget(self.clear_BTN)
+		self.List_Type.addWidget(self.list_widgets)
 
 
 		self.List_view_layout.addWidget(self.List_BTN)
 		self.List_view_layout.addWidget(self.view)
 
 		self.list_layot_main.addLayout(self.List_view_layout)
-		self.list_layot_main.addWidget(self.list_widgets)
+		# self.list_layot_main.addWidget(self.list_widgets)
+		self.list_layot_main.addLayout(self.List_Type)
 
 
 		self.main_layout.addLayout(self.list_layot_main)
 
 		self.List_BTN.clicked.connect(self.set_list)
 		self.view.selectionModel().selectionChanged.connect(self.selectionChanged)
+
+	def setupUI_set(self):
+
+		self.addBTN = Buttons_ADD()
+		self.listscrollArea = SetScrollArea()
+		self.listscrollArea_layout = QtWidgets.QHBoxLayout()
+		self.listscrollArea_layout.addWidget(self.listscrollArea)
+		self.set_layout = QtWidgets.QHBoxLayout()
+		# self.set_addBTN = QtWidgets.QVBoxLayout()
+
+		self.set_layout.addWidget(self.addBTN)
+		self.set_layout.addLayout(self.listscrollArea_layout)
+		for i in range(4):
+			self.addBTN2 = Buttons_set_name(str(i))
+			self.listscrollArea.scroll_area_widget_layout.addWidget(self.addBTN2)
+
+		self.main_layout.addLayout(self.set_layout)
+
+
+	def clear_Widget_listType(self):
+		Count = self.widget_layout.count()
+		if Count:
+			for i in range(Count):
+				Widget = self.widget_layout.itemAt(i).widget()
+
+				Widget.deleteLater()
+
+		self.model.clear()
+		self.List_BTN.set_Count(0)
 
 	def menuUI(self):
 		self.menu = QtWidgets.QMenuBar()
@@ -266,25 +659,61 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		self.Edit_menu_Ru.triggered.connect(self.GetRu)
 
 
-		# sortMenu = EditMenu.addMenu('Sort Order')
-		#
-		# # Create an exclusive set of sorting mode options
-		# self.sortActions = QtWidgets.QActionGroup(sortMenu)
-		#
-		# self.sortAction1 = self.sortActions.addAction('Scene Hierarchy')
-		# self.sortAction1.setCheckable(True)
-		# self.sortAction1.setChecked(True)
-		# sortMenu.addAction(self.sortAction1)
-		#
-		# self.sortAction2 = self.sortActions.addAction('Alphabetical Within Type')
-		# self.sortAction2.setCheckable(True)
-		# sortMenu.addAction(self.sortAction2)
-
-		# connect sortmethod changes to a slot
 		self.main_layout.addWidget(self.menu)
 		# self.sortActions.triggered.connect(self.sortMethodChanged)
 	def GetRu(self):
-		print("ru")
+
+		ABC = get_json_data("alphabet.json")
+		ListLong_Sel = cmds.ls(sl=1, l=1)
+		ListLong_Hi = cmds.ls(sl=1, dag=1, l=1)
+		ListLong_Hi.extend(ListLong_Sel)
+		ListLongName = list(set(ListLong_Hi))
+
+		RUList = []
+		RUlib = {}
+		if ListLongName:
+			for i in ListLongName:
+				shortName = self.get_short_Name(i)
+				for a in shortName:
+
+					if a in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"] or a == "_":
+						continue
+
+					elif a not in ABC["EN"].keys():
+						if ord(a) == ABC["RU"][a]:
+							print("Name ['{}'], Ru = ['{}']".format(shortName,a))
+							RUList.append(i)
+							break
+
+
+		RUlib["Ru"] = RUList
+
+		Count = self.widget_layout.count()
+		if Count:
+			for i in range(Count):
+				Widget = self.widget_layout.itemAt(i).widget()
+				WidgetName = Widget.objectName()
+
+				if WidgetName in ["Ruid"]:
+					Widget.deleteLater()
+
+		if RUList:
+			self.model.clear()
+			self.Creat_ButtonType(RUlib)
+
+			Count = self.widget_layout.count()
+			if Count:
+				for i in range(Count):
+					Widget = self.widget_layout.itemAt(i).widget()
+					WidgetName = Widget.objectName()
+
+					if WidgetName in ["Ruid"]:
+						cmds.select(Widget.TypeList, r=1)
+
+		else:
+
+			print("No Ru Name")
+
 	def GetDuplicate(self):
 
 
@@ -316,10 +745,11 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 				Widget = self.widget_layout.itemAt(i).widget()
 				WidgetName = Widget.objectName()
 
-				if WidgetName in ["duplicateid", "Ruid"]:
+				if WidgetName in ["duplicateid"]:
 					Widget.deleteLater()
 
 		if newList:
+			self.model.clear()
 
 			self.Creat_ButtonType(librLisr)
 
@@ -337,7 +767,6 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		else:
 
 			print("No Duplicate Name")
-
 
 	def get_short_Name(self, longName):
 		shortName = longName.rpartition("|")[-1]
@@ -393,6 +822,13 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 						else:
 							librLisr[type] =  [i]
 
+					elif type in ["parentConstraint", "pointConstraint", "orientConstraint", "scaleConstraint","aimConstraint", "poleVectorConstraint"]:
+						type = "Constraint"
+						if type in librLisr.keys():
+							librLisr[type].append(i)
+						else:
+							librLisr[type] = [i]
+
 					elif i in shapelist:
 						continue
 					else:
@@ -406,7 +842,7 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 
 		librLisr["shape"] = list(set(shapelist))
-		print(librLisr)
+
 		self.Creat_ButtonType(librLisr)
 
 	def Creat_ButtonType(self, library = {}):
@@ -437,7 +873,6 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 			for i in range(Count):
 				Widget = self.widget_layout.itemAt(i).widget()
 
-
 				Widget.deleteLater()
 
 
@@ -463,48 +898,8 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		self.model.appendColumn(node)
 		self.List_BTN.set_Count(len(ListLongName))
 
-	def Test(self):
-		self.model = QtGui.QStandardItemModel()
-		self.model.setItemPrototype(DagTreeItem())
-
-		# Use our custom sort proxy model to sit between our
-		# original model, and the tree view
-		self.sortModel = DagTreeProxyModel()
-		self.sortModel.setSourceModel(self.model)
-		self.sortModel.setDynamicSortFilter(True)
-		# each DagTreeItem will have its special sort key set as
-		# the UserRole data. Use this data for sort comparisons
-		self.sortModel.setSortRole(QtCore.Qt.UserRole)
-
-		view = QtWidgets.QTreeView()
-		# set the sort model to the view instead of the original
-		view.setModel(self.sortModel)
-		view.header().setVisible(False)
-		view.setEditTriggers(view.NoEditTriggers)
-		view.setSelectionMode(view.ExtendedSelection)
-
-		self.view = view
-		self.main_layout.addWidget(self.view)
-
-		QtCore.QTimer.singleShot(1, self.initDisplay)
-
-		#
-		# Connections
-		#
-		# self.view.expanded.connect(self.nodeExpanded)
-		self.view.selectionModel().selectionChanged.connect(self.selectionChanged)
-
 	def nodeExpanded(self, idx):
-		"""
-		nodeExpanded(QModelIndex idx)
-		Slot to handle an item in the list being expanded.
-		Populates the children of this items immediate children.
-		"""
 
-		# because we are now using a sort proxy model on the view,
-		# this method will receive a proxy index instead of the source
-		# index. We need to map it to the original index first so we
-		# can then look up the item in the source model.
 		idx = self.sortModel.mapToSource(idx)
 
 		item = self.model.itemFromIndex(idx)
@@ -521,12 +916,7 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 				# print("child {}, grandChildren {}".format(child, grandChildren))
 	#
 	def selectionChanged(self):
-		"""
-		selectionChanged()
-		Slot called when the selection of the view has changed.
-		Selects the corresponding nodes in the Maya scene that
-		match the selected view items.
-		"""
+
 		sel = self.view.selectedIndexes()
 		nodes = [self.model.itemFromIndex(i).fullname for i in sel]
 		if nodes:
@@ -598,7 +988,6 @@ class DagTreeProxyModel(QtCore.QSortFilterProxyModel):
 		return True
 		# return super(DagTreeProxyModel, self).filterAcceptsRow(sourceRow, sourceParent)
 
-
 class DagTreeItem(QtGui.QStandardItem):
 	"""
 	DagTreeItem(QtGui.QStandardItem)
@@ -616,9 +1005,7 @@ class DagTreeItem(QtGui.QStandardItem):
 
 		# self.setIcon((QtGui.QIcon(os.path.join(root_, "icons/tool.svg")),"Edit"))
 
-		# Add the sort key string as a UserRole data to
-		# the item. We can then set the model to use this
-		# role when performing sort comparisons.
+
 		# self.setData(self.sortKey, QtCore.Qt.UserRole)
 		if self.fullname:
 			self.set_icon()
@@ -630,11 +1017,7 @@ class DagTreeItem(QtGui.QStandardItem):
 
 	@property
 	def sortKey(self):
-		"""
-		Computed property that builds a sort key based on a
-		combination of attributes.
-		Allows sorting to consider multiple keys.
-		"""
+
 		if self.dagObj:
 			self.apiType = self.dagObj.apiType()
 
@@ -651,8 +1034,7 @@ class DagTreeItem(QtGui.QStandardItem):
 
 
 	def set_icon(self, stateShape = None):
-		# typeList  = ["mesh", "locator", "joint", "nurbsSurface", "nurbsCurve",
-		# 			 "transform", "camera", "baseLattice", "lattice", "clusterHandle"]
+
 		type = cmds.nodeType(self.fullname)
 		if self.fullname:
 			if type == "transform":
@@ -669,8 +1051,6 @@ class DagTreeItem(QtGui.QStandardItem):
 			else:
 				self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/menuIconConstraints.png")))
 
-
-
 	@property
 	def fullname(self):
 		if not self.dagObj:
@@ -685,3 +1065,16 @@ class DagTreeItem(QtGui.QStandardItem):
 	@property
 	def parentname(self):
 		return self.fullname.rsplit('|', 1)[0]
+
+def get_json_data(str):
+    listButtonsName_path_ = os.path.join(root_, str)
+    json_data = None
+    with open(listButtonsName_path_, "r") as inFile:
+        json_data = json.load(inFile)
+
+    return json_data
+
+def set_json_data(json_data, str ):
+    listButtonsName_path_ = os.path.join(root_, str)
+    with open(listButtonsName_path_, "w") as outfile:
+        json.dump(json_data, outfile, indent=4)
