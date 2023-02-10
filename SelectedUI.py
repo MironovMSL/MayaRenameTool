@@ -1,6 +1,6 @@
 import maya.cmds as cmds
 from PySide2 import QtWidgets, QtGui, QtCore
-from maya.app.general.mayaMixin import MayaQWidgetDockableMixin , MayaQWidgetBaseMixin
+from maya.app.general.mayaMixin import MayaQWidgetDockableMixin, MayaQWidgetBaseMixin
 import os
 import sys
 import json
@@ -8,197 +8,171 @@ import json
 import maya.OpenMaya as om
 import maya.OpenMayaUI as mui
 
-
-
-
-
 root_ = os.path.dirname(__file__)
-typeList  = ["mesh", "nurbsSurface", "nurbsCurve", "joint", "locator", "shape", "follicle",
-			 "transform", "camera", "baseLattice", "lattice", "clusterHandle", "indefined", "TypeAll",
-			 "areaLight", "ambientLight", "directionalLight", "volumeLight", "pointLight", "spotLight",
-			 "duplicate", "Ru", "Constraint",
-			 "parentConstraint", "pointConstraint", "orientConstraint", "scaleConstraint","aimConstraint", "poleVectorConstraint"]
+typeList = ["mesh", "nurbsSurface", "nurbsCurve", "joint", "locator", "shape", "follicle",
+			"transform", "camera", "baseLattice", "lattice", "clusterHandle", "indefined", "TypeAll",
+			"areaLight", "ambientLight", "directionalLight", "volumeLight", "pointLight", "spotLight",
+			"duplicate", "Ru", "Constraint",
+			"parentConstraint", "pointConstraint", "orientConstraint", "scaleConstraint", "aimConstraint",
+			"poleVectorConstraint"]
 
 
 class Buttons_set_name(QtWidgets.QPushButton):
-    itClickedName = QtCore.Signal(str)
+	itClickedName = QtCore.Signal(list)
 
-    def __init__(self, text= ""):
-        super(Buttons_set_name, self).__init__()
+	def __init__(self, text="", listsel=[]):
+		super(Buttons_set_name, self).__init__()
 
-        self._text = text
-        self.setObjectName(self._text)
-        self.setFixedSize(40, 25)
-        self.setText(self._text)
+		self._text = text
+		self.listsel = listsel
 
-        # LineEdit setVisible
-        self.NameLineEdit = QtWidgets.QLineEdit()
-        self.NameLineEdit.setText(self._text)
-        self.NameLineEdit.setAlignment(QtCore.Qt.AlignHCenter)
+		self.setObjectName(self._text)
+		self.setFixedSize(30, 25)
+		self.setText(self._text)
+		self.setToolTip(self._text)
 
-        self.NameLineEdit.setVisible(0)
+		# LineEdit setVisible
+		self.NameLineEdit = QtWidgets.QLineEdit()
+		self.NameLineEdit.setText(self._text)
+		self.NameLineEdit.setAlignment(QtCore.Qt.AlignHCenter)
 
-        self.NameLineEdit.returnPressed.connect(self.setNewMame)
+		self.NameLineEdit.setVisible(0)
+		self.NameLineEdit.setFixedSize(30, 25)
+		self.NameLineEdit.returnPressed.connect(self.setNewMame)
 
-        self.main_layout = QtWidgets.QVBoxLayout()
-        self.main_layout.setContentsMargins(0, 0, 0, 0)
-        self.main_layout.setSpacing(0)
-        self.setLayout(self.main_layout)
+		self.main_layout = QtWidgets.QVBoxLayout()
+		self.main_layout.setContentsMargins(0, 0, 0, 0)
+		self.main_layout.setSpacing(0)
+		self.setLayout(self.main_layout)
 
-        self.main_layout.addWidget(self.NameLineEdit)
+		self.main_layout.addWidget(self.NameLineEdit)
+		self.creat_context_menu()
 
-    def setNewMame (self):
+	def setNewMame(self):
 
-        btnText = self.text()
-        text    = self.NameLineEdit.text()
-        self.setText(text)
+		btnText = self.text()
+		text = self.NameLineEdit.text()
+		self.setText(text)
+		self.setToolTip(text)
 
+		self.Rename_bnt()
 
-        self.Rename_bnt()
+		print("Rename button [{}] in [{}]".format(btnText, text))
 
-        print("Rename button [{}] in [{}]".format( btnText, text ))
+	def enterEvent(self, event):
+		self.setCursor(QtCore.Qt.PointingHandCursor)
+		super(Buttons_set_name, self).enterEvent(event)
 
-    def enterEvent(self,event):
-        self.setCursor(QtCore.Qt.PointingHandCursor)
-        super(Buttons_set_name, self).enterEvent(event)
+	def leaveEvent(self, event):
+		self.setCursor(QtCore.Qt.ArrowCursor)
+		super(Buttons_set_name, self).leaveEvent(event)
 
-    def leaveEvent(self, event):
-        self.setCursor(QtCore.Qt.ArrowCursor)
-        super(Buttons_set_name, self).leaveEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        super(Buttons_set_name, self).mouseReleaseEvent(event)
-        self.itClickedName.emit(self.text())
-
-    def mousePressEvent(self, event):
-
-        super(Buttons_set_name, self).mousePressEvent(event)
-        if event.buttons() == QtCore.Qt.RightButton:
-
-            self.creat_context_menu()
-            self.popMenu.exec_(self.mapToGlobal(event.pos()))
+	def mouseReleaseEvent(self, event):
+		self.itClickedName.emit(self.listsel)
+		super(Buttons_set_name, self).mouseReleaseEvent(event)
 
 
-        if event.buttons() != QtCore.Qt.MidButton:
-            return
+	def mousePressEvent(self, event):
 
-        self.setVisible(0)
-        mimeData = NameMIMEData()
-        mimeData.Name_Btn = self.text()
+		super(Buttons_set_name, self).mousePressEvent(event)
+		if event.buttons() == QtCore.Qt.RightButton:
 
-        # Creat ghost image
-        self.pixmap = self.grab()
-        painter = QtGui.QPainter(self.pixmap)
-
-        painter.setCompositionMode(painter.CompositionMode_DestinationIn)
-        painter.fillRect(self.pixmap.rect(), QtGui.QColor(80, 80, 80, 100))
-        painter.end
-
-        # start drag and drop
-        drag = QtGui.QDrag(self)
-        drag.setMimeData(mimeData)
-        drag.setPixmap(self.pixmap)
-        drag.setHotSpot(event.pos())
+			self.popMenu.exec_(self.mapToGlobal(event.pos()))
 
 
-        drag.exec_(QtCore.Qt.LinkAction | QtCore.Qt.MoveAction)
+	def creat_context_menu(self):
 
-    def creat_context_menu(self):
+		self.popMenu = QtWidgets.QMenu(self)
 
-        self.popMenu = QtWidgets.QMenu(self)
+		self.popMenuAdd = QtWidgets.QAction("Rename", self)
+		self.popMenu.addAction(self.popMenuAdd)
+		self.popMenuAdd.triggered.connect(self.Rename_bnt)
 
-        self.popMenuAdd = QtWidgets.QAction("Rename", self)
-        self.popMenu.addAction(self.popMenuAdd)
-        self.popMenuAdd.triggered.connect(self.Rename_bnt)
+		self.popMenuDel = QtWidgets.QAction("Delete", self)
+		self.popMenu.addAction(self.popMenuDel)
+		self.popMenuDel.triggered.connect(self.Delete_btn)
 
-        self.popMenuDel = QtWidgets.QAction("Delete", self)
-        self.popMenu.addAction(self.popMenuDel)
-        self.popMenuDel.triggered.connect(self.Delete_btn)
+		self.popMenuDel_obj = QtWidgets.QAction("Remove object", self)
+		self.popMenu.addAction(self.popMenuDel_obj)
+		self.popMenuDel_obj.triggered.connect(self.del_object)
 
-    def Rename_bnt(self):
-        vis = self.NameLineEdit.isVisible()
-        if vis:
-            self.NameLineEdit.setVisible(0)
+		self.popMenuAdd_obj = QtWidgets.QAction("Add object", self)
+		self.popMenu.addAction(self.popMenuAdd_obj)
+		self.popMenuAdd_obj.triggered.connect(self.Add_object)
 
-        else:
-            self.NameLineEdit.setVisible(1)
-            self.NameLineEdit.setFocus()
+	def Rename_bnt(self):
+		vis = self.NameLineEdit.isVisible()
+		if vis:
+			self.NameLineEdit.setVisible(0)
 
-    def Delete_btn(self):
-        self.deleteLater()
-        print("Delete button [{}]".format(self.text()))
-class Buttons_ADD (QtWidgets.QPushButton):
+		else:
+			self.NameLineEdit.setVisible(1)
+			self.NameLineEdit.setFocus()
 
-    itToggleBox = QtCore.Signal(bool)
+	def Delete_btn(self):
+		self.deleteLater()
 
-    def __init__(self):
-        super(Buttons_ADD, self).__init__()
+	def Add_object(self):
+		pass
 
-        self.setObjectName("AddNameID")
-        # self.setStyleSheet("background-color: rgba(255, 255, 255,50);")
-        # self.setText("add")
-        self.setMaximumSize(20,30)
-        self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/plus.svg")))
-        self.CreatContextMenu()
+	def del_object(self):
 
-    def enterEvent(self,event):
-        self.setCursor(QtCore.Qt.PointingHandCursor)
-        super(Buttons_ADD, self).enterEvent(event)
+		select = cmds.ls(sl=1, l=1)
+		for i in select:
+			if i in self.listsel:
+				del self.listsel[i]
 
-    def leaveEvent(self, event):
-        self.setCursor(QtCore.Qt.ArrowCursor)
-        super(Buttons_ADD, self).leaveEvent(event)
 
-    def mousePressEvent(self, event):
 
-        if event.buttons() == QtCore.Qt.RightButton:
-            self.popMenu.exec_(self.mapToGlobal(event.pos()))
+class Buttons_ADD(QtWidgets.QPushButton):
+	itToggleBox = QtCore.Signal(bool)
+	itToggleClear = QtCore.Signal()
 
-        super(Buttons_ADD, self).mousePressEvent(event)
+	def __init__(self):
+		super(Buttons_ADD, self).__init__()
 
-    def CreatContextMenu(self):
+		self.setObjectName("AddNameID")
+		# self.setStyleSheet("background-color: rgba(255, 255, 50,50);")
 
-        self.popMenu = QtWidgets.QMenu(self)
-        # self.popMenu.setTearOffEnabled(True)
-        self.popMenu.setTitle("add state")
+		self.setMaximumSize(20, 30)
+		self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/plus.svg")))
+		self.CreatContextMenu()
 
-        self.popMenuButtons = QtWidgets.QAction("Button", self)
-        self.popMenu.addAction(self.popMenuButtons)
-        self.popMenuButtons.setCheckable(True)
-        self.popMenuButtons.setChecked(True)
-        self.popMenuButtons.triggered.connect(self.Add_button)
+	def enterEvent(self, event):
+		self.setCursor(QtCore.Qt.PointingHandCursor)
+		super(Buttons_ADD, self).enterEvent(event)
 
-        self.popMenuCategory = QtWidgets.QAction("Category", self)
-        self.popMenu.addAction(self.popMenuCategory)
-        self.popMenuCategory.setCheckable(True)
-        self.popMenuCategory.triggered.connect(self.Add_Category)
+	def leaveEvent(self, event):
+		self.setCursor(QtCore.Qt.ArrowCursor)
+		super(Buttons_ADD, self).leaveEvent(event)
 
-        self.action_group_Buttons = QtWidgets.QActionGroup(self)
+	def mousePressEvent(self, event):
+		if event.buttons() == QtCore.Qt.RightButton:
+			self.popMenu.exec_(self.mapToGlobal(event.pos()))
 
-        self.action_group_Buttons.addAction(self.popMenuButtons)
-        self.action_group_Buttons.addAction(self.popMenuCategory)
+		super(Buttons_ADD, self).mousePressEvent(event)
 
-    def Add_Category(self, state):
+	def CreatContextMenu(self):
+		self.popMenu = QtWidgets.QMenu(self)
+		# self.popMenu.setTearOffEnabled(True)
+		self.popMenu.setTitle("add setting")
 
-        self.popMenuCategory.setChecked(True)
-        self.popMenuButtons.setChecked(False)
+		self.popMenuClear = QtWidgets.QAction("Clear", self)
+		self.popMenuClear.setIcon(QtGui.QIcon(os.path.join(root_, "icons/clear.png")))
+		self.popMenu.addAction(self.popMenuClear)
+		self.popMenuClear.triggered.connect(self.setClear)
 
-        self.itToggleBox.emit(False)
+	def setClear(self):
+		self.itToggleClear.emit()
 
-    def Add_button(self, state):
-
-        self.popMenuButtons.setChecked(True)
-        self.popMenuCategory.setChecked(False)
-
-        self.itToggleBox.emit(True)
 class SetScrollArea(QtWidgets.QScrollArea):
 
-    def __init__(self, parent =None):
-        super(SetScrollArea, self).__init__(parent)
+	def __init__(self, parent=None):
+		super(SetScrollArea, self).__init__(parent)
 
-        self.index = int
+		self.index = int
 
-        scroll_style = """QScrollBar:horizontal {
+		scroll_style = """QScrollBar:horizontal {
                             background: rgb(10, 10, 10);
                             height: 5px;
                             margin: 0px 0 0 0px;
@@ -209,132 +183,124 @@ class SetScrollArea(QtWidgets.QScrollArea):
                         }
                         """
 
-        self.setObjectName("SetScrollAreaid")
-        self.setMinimumSize(100, 30)
-        self.setFixedHeight(30)
+		self.setObjectName("SetScrollAreaid")
+		self.setMinimumSize(100, 30)
+		self.setFixedHeight(30)
 
-        self.setWidgetResizable(True)
-        self.setAcceptDrops(True)
+		self.setWidgetResizable(True)
+		self.setAcceptDrops(True)
 
-        self.setFocusPolicy(QtCore.Qt.NoFocus)
-        self.setFrameShape(QtWidgets.QFrame.NoFrame)
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        # self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+		self.setFocusPolicy(QtCore.Qt.NoFocus)
+		self.setFrameShape(QtWidgets.QFrame.NoFrame)
+		self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+		# self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
 
-        self.scrollbar = QtWidgets.QScrollBar()
-        self.scrollbar.setStyleSheet(scroll_style)
-        self.setHorizontalScrollBar(self.scrollbar)
+		self.scrollbar = QtWidgets.QScrollBar()
+		self.scrollbar.setStyleSheet(scroll_style)
+		self.setHorizontalScrollBar(self.scrollbar)
 
-        self.scroll_area_widget = QtWidgets.QWidget()
-        self.setWidget(self.scroll_area_widget)
+		self.scroll_area_widget = QtWidgets.QWidget()
+		self.setWidget(self.scroll_area_widget)
 
+		self.scroll_area_widget_layout = QtWidgets.QHBoxLayout(self.scroll_area_widget)
+		self.scroll_area_widget_layout.setContentsMargins(0, 0, 0, 0)
+		self.scroll_area_widget_layout.setSpacing(2)
+		self.scroll_area_widget_layout.setAlignment(QtCore.Qt.AlignLeft)
+		self.scroll_area_widget_layout.setAlignment(QtCore.Qt.AlignTop)
 
-        self.scroll_area_widget_layout = QtWidgets.QHBoxLayout(self.scroll_area_widget)
-        self.scroll_area_widget_layout.setContentsMargins(0, 0, 0, 0)
-        self.scroll_area_widget_layout.setSpacing(2)
-        self.scroll_area_widget_layout.setAlignment(QtCore.Qt.AlignLeft)
-        self.scroll_area_widget_layout.setAlignment(QtCore.Qt.AlignTop)
+	def receiveSignal(self, text):
+		self.itClickedName.emit(text)
 
+	def dragLeaveEvent(self, event):
 
+		Count = self.scroll_area_widget_layout.count()
+		for num, i in enumerate(range(Count), start=1):
+			widget = self.scroll_area_widget_layout.itemAt(i).widget()
+			widetName = widget.objectName()
+			if widetName == "Separator":
+				continue
+			visibl = widget.isVisible()
+			if visibl == False:
+				widget.setVisible(1)
+				self.scroll_area_widget_layout.insertWidget(self.index, widget)
 
-    def receiveSignal(self, text):
-        self.itClickedName.emit(text)
+		self.Separator.setVisible(0)
 
-    def dragLeaveEvent(self, event):
+	def dragEnterEvent(self, event):
+		event.acceptProposedAction()
 
-        Count = self.scroll_area_widget_layout.count()
-        for num, i in enumerate(range(Count), start=1):
-            widget = self.scroll_area_widget_layout.itemAt(i).widget()
-            widetName = widget.objectName()
-            if widetName == "Separator":
+		event.source().setVisible(0)
+		self.Separator.setVisible(1)
 
-                continue
-            visibl = widget.isVisible()
-            if visibl == False:
-                widget.setVisible(1)
-                self.scroll_area_widget_layout.insertWidget(self.index, widget)
+		indexX = event.pos().x() // 40
 
-        self.Separator.setVisible(0)
+		self.scroll_area_widget_layout.insertWidget(indexX, self.Separator)
+		self.index = indexX
 
-    def dragEnterEvent(self, event):
-        event.acceptProposedAction()
+	def dragMoveEvent(self, event):
+		event.acceptProposedAction()
 
-        event.source().setVisible(0)
-        self.Separator.setVisible(1)
+		Count = self.scroll_area_widget_layout.count()
+		for num, i in enumerate(range(Count), start=1):
+			item = self.scroll_area_widget_layout.itemAt(i)
+			widet = item.widget().objectName()
+			visibl = item.widget().isVisible()
 
-        indexX   = event.pos().x()//40
+		self.Separator.setVisible(1)
+		indexX = event.pos().x() // 40
 
-        self.scroll_area_widget_layout.insertWidget(indexX, self.Separator)
-        self.index = indexX
+		self.scroll_area_widget_layout.insertWidget(indexX, self.Separator)
+		self.index = indexX
 
-    def dragMoveEvent(self, event):
-        event.acceptProposedAction()
+	def dropEvent(self, event):
 
-        Count = self.scroll_area_widget_layout.count()
-        for num, i in enumerate(range(Count), start=1):
-            item = self.scroll_area_widget_layout.itemAt(i)
-            widet = item.widget().objectName()
-            visibl = item.widget().isVisible()
+		mimeData = event.mimeData()
+		if mimeData.text():
+			Name = mimeData.text()
+		else:
+			Name = mimeData.Name_Btn
 
-        self.Separator.setVisible(1)
-        indexX = event.pos().x() // 40
+		Count = self.scroll_area_widget_layout.count()
+		indexX = (event.pos().x() // 50)
 
+		listW = []
 
-        self.scroll_area_widget_layout.insertWidget(indexX, self.Separator)
-        self.index = indexX
+		Index = int
+		for i in range(Count):
+			item = self.scroll_area_widget_layout.itemAt(i)
+			widet = item.widget().objectName()
+			if Name == widet:
+				Index = i
 
-    def dropEvent(self, event):
+			listW.append(widet)
 
-        mimeData = event.mimeData()
-        if mimeData.text():
-            Name = mimeData.text()
-        else:
-            Name = mimeData.Name_Btn
+		self.Separator.setVisible(0)
 
-        Count = self.scroll_area_widget_layout.count()
-        indexX = (event.pos().x() // 50)
+		if Name in listW:
 
+			widet = self.scroll_area_widget_layout.itemAt(Index).widget()
+			widet.setVisible(1)
+			self.scroll_area_widget_layout.insertWidget(indexX, widet)
 
-
-        listW = []
-
-        Index = int
-        for i in range(Count):
-            item = self.scroll_area_widget_layout.itemAt(i)
-            widet = item.widget().objectName()
-            if Name == widet:
-                Index = i
-
-            listW.append(widet)
-
-        self.Separator.setVisible(0)
-
-        if Name in listW:
-
-            widet = self.scroll_area_widget_layout.itemAt(Index).widget()
-            widet.setVisible(1)
-            self.scroll_area_widget_layout.insertWidget(indexX, widet)
-
-            # print("this name [{}] already exists in [{}]".format(Name, self.objectName()))
+			# print("this name [{}] already exists in [{}]".format(Name, self.objectName()))
 
 
-        else:
+		else:
 
-            self.fast_access_BTN = Buttons_fast_name(Name)
-            self.scroll_area_widget_layout.insertWidget(indexX, self.fast_access_BTN)
-            self.fast_access_BTN.itClickedName.connect(self.receiveSignal)
+			self.fast_access_BTN = Buttons_fast_name(Name)
+			self.scroll_area_widget_layout.insertWidget(indexX, self.fast_access_BTN)
+			self.fast_access_BTN.itClickedName.connect(self.receiveSignal)
 
-            Count = self.scroll_area_widget_layout.count()
+			Count = self.scroll_area_widget_layout.count()
 
-            for num, i in enumerate(range(Count), start=1):
+			for num, i in enumerate(range(Count), start=1):
+				item = self.scroll_area_widget_layout.itemAt(i)
+				widet = item.widget().objectName()
 
-                item = self.scroll_area_widget_layout.itemAt(i)
-                widet = item.widget().objectName()
+			event.source().setVisible(1)
 
+			# print("this name [{}] move in [{}]".format(Name, self.objectName()))
 
-            event.source().setVisible(1)
-
-            # print("this name [{}] move in [{}]".format(Name, self.objectName()))
 
 class ListBTN(QtWidgets.QPushButton):
 	isEmitStateRename = QtCore.Signal(str, bool)
@@ -368,7 +334,6 @@ class ListBTN(QtWidgets.QPushButton):
 		self.creat_context_menu()
 		self.setStyleSheet(self.Style_btn)
 
-
 	def set_Count(self, count):
 		if count == 0:
 			count = ""
@@ -396,7 +361,6 @@ class ListBTN(QtWidgets.QPushButton):
 		# self.popMenu.setTearOffEnabled(True)
 		self.popMenu.setTitle("List Seting")
 
-
 		# in Selected
 		self.action_group_Buttons = QtWidgets.QActionGroup(self)
 
@@ -422,10 +386,11 @@ class ListBTN(QtWidgets.QPushButton):
 	def State_Hierarchy(self, state):
 		self.isEmitStateRename.emit("Selected_object", state)
 
-class ButtonType(QtWidgets.QPushButton):
 
+class ButtonType(QtWidgets.QPushButton):
 	isTypeList = QtCore.Signal(list)
-	def __init__(self, TypeIcon, TypeList = []):
+
+	def __init__(self, TypeIcon, TypeList=[]):
 		super(ButtonType, self).__init__()
 
 		self.TypeIcon = TypeIcon
@@ -442,7 +407,6 @@ class ButtonType(QtWidgets.QPushButton):
 
 		self.set_TypeList()
 
-
 	def set_TypeList(self):
 
 		self.TypeList = self.list
@@ -451,8 +415,8 @@ class ButtonType(QtWidgets.QPushButton):
 			if self.popMenu_Shape.isChecked():
 				self.TypeList = self.list
 			else:
-				typeList = ["mesh", "nurbsSurface", "nurbsCurve", "locator", "follicle","camera", "baseLattice",
-							"lattice", "clusterHandle","areaLight", "ambientLight", "directionalLight",
+				typeList = ["mesh", "nurbsSurface", "nurbsCurve", "locator", "follicle", "camera", "baseLattice",
+							"lattice", "clusterHandle", "areaLight", "ambientLight", "directionalLight",
 							"volumeLight", "pointLight", "spotLight"]
 
 				TypeListNoShape = []
@@ -461,11 +425,7 @@ class ButtonType(QtWidgets.QPushButton):
 					if cmds.nodeType(i) not in typeList:
 						TypeListNoShape.append(i)
 
-
 				self.TypeList = TypeListNoShape
-
-
-
 
 	def creat_context_menu(self):
 		self.popMenu = QtWidgets.QMenu(self)
@@ -485,8 +445,6 @@ class ButtonType(QtWidgets.QPushButton):
 
 		else:
 			self.isTypeList.emit(self.TypeList)
-
-
 
 	def set_icon(self):
 
@@ -514,13 +472,14 @@ class ButtonType(QtWidgets.QPushButton):
 		self.setCursor(QtCore.Qt.ArrowCursor)
 		super(ButtonType, self).leaveEvent(event)
 
+
 class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 	def __init__(self, *args, **kwargs):
 		super(MSL_Selected, self).__init__(*args, **kwargs)
 
-		self.setMinimumSize(150,200)
-		self.resize(200,400)
+		self.setMinimumSize(150, 200)
+		self.resize(200, 400)
 		self.setObjectName("CustomMSL_Selected")
 		self.setWindowTitle("Selected")
 
@@ -533,7 +492,24 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 		self.setupUI_set()
 
-		# QtCore.QTimer.singleShot(1, self.set_list)
+	# QtCore.QTimer.singleShot(1, self.set_list)
+
+	def menuUI(self):
+		self.menu = QtWidgets.QMenuBar()
+		self.EditMenu = self.menu.addMenu(QtGui.QIcon(os.path.join(root_, "icons/tool.svg")), "Edit")
+		# self.EditMenu.setTearOffEnabled(True)
+
+		self.Edit_menu_duplicate = QtWidgets.QAction("duplicate name", self)
+		self.Edit_menu_duplicate.setIcon(QtGui.QIcon(os.path.join(root_, "icons/duplicate.png")))
+		self.EditMenu.addAction(self.Edit_menu_duplicate)
+		self.Edit_menu_duplicate.triggered.connect(self.GetDuplicate)
+
+		self.Edit_menu_Ru = QtWidgets.QAction("Ru name", self)
+		self.Edit_menu_Ru.setIcon(QtGui.QIcon(os.path.join(root_, "icons/Ru.png")))
+		self.EditMenu.addAction(self.Edit_menu_Ru)
+		self.Edit_menu_Ru.triggered.connect(self.GetRu)
+
+		self.main_layout.addWidget(self.menu)
 
 	def setupUI(self):
 
@@ -572,13 +548,12 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		                        """
 
 		self.scrollbarV = QtWidgets.QScrollBar()
-		self.scrollbarH= QtWidgets.QScrollBar()
+		self.scrollbarH = QtWidgets.QScrollBar()
 		self.scrollbarV.setStyleSheet(scroll_styleV)
 		self.scrollbarH.setStyleSheet(scroll_styleH)
 		self.view.setVerticalScrollBar(self.scrollbarV)
 		self.view.setHorizontalScrollBar(self.scrollbarH)
-		#------------------------------------------
-
+		# ------------------------------------------
 
 		self.list_layot_main = QtWidgets.QHBoxLayout()
 
@@ -587,7 +562,27 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		self.list_widgets = QtWidgets.QWidget()
 		self.list_widgets.setFixedWidth(16)
 		self.clear_BTN = QtWidgets.QPushButton("( )")
-		self.clear_BTN.setFixedSize(16,20)
+
+		self.clear_BTN.setStyleSheet("""
+                                          QPushButton {
+                                          background-color: rgb(70, 70, 70);
+                                          border-style: outset;
+                                          border-width: 1px;
+                                          border-radius: 3px;
+                                          border-color: beige;
+                                          font: bold 14px;
+                                          font: 7pt, Arial;
+                                          color: rgb(255, 255, 255);}
+                                          
+                                          QPushButton:hover{
+         
+                                          background-color: rgb(80, 80, 80);}
+                                          
+                                          QPushButton:pressed {
+                                          background-color: rgb(100, 100, 100);
+                                          border-style: inset;}
+                                       """)
+		self.clear_BTN.setFixedSize(16, 20)
 		self.clear_BTN.clicked.connect(self.clear_Widget_listType)
 
 		self.List_Type = QtWidgets.QVBoxLayout()
@@ -600,14 +595,12 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		self.List_Type.addWidget(self.clear_BTN)
 		self.List_Type.addWidget(self.list_widgets)
 
-
 		self.List_view_layout.addWidget(self.List_BTN)
 		self.List_view_layout.addWidget(self.view)
 
 		self.list_layot_main.addLayout(self.List_view_layout)
 		# self.list_layot_main.addWidget(self.list_widgets)
 		self.list_layot_main.addLayout(self.List_Type)
-
 
 		self.main_layout.addLayout(self.list_layot_main)
 
@@ -616,21 +609,37 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 	def setupUI_set(self):
 
-		self.addBTN = Buttons_ADD()
-		self.listscrollArea = SetScrollArea()
+		self.addsetBtn             = Buttons_ADD()
+		self.listscrollArea        = SetScrollArea()
 		self.listscrollArea_layout = QtWidgets.QHBoxLayout()
-		self.listscrollArea_layout.addWidget(self.listscrollArea)
-		self.set_layout = QtWidgets.QHBoxLayout()
-		# self.set_addBTN = QtWidgets.QVBoxLayout()
+		self.set_layout            = QtWidgets.QHBoxLayout()
 
-		self.set_layout.addWidget(self.addBTN)
+		self.addsetBtn.clicked.connect(self.addSel_list)
+		self.addsetBtn.itToggleClear.connect(self.setClear)
+
+		self.listscrollArea_layout.addWidget(self.listscrollArea)
+		self.set_layout.addWidget(self.addsetBtn)
 		self.set_layout.addLayout(self.listscrollArea_layout)
-		for i in range(4):
-			self.addBTN2 = Buttons_set_name(str(i))
-			self.listscrollArea.scroll_area_widget_layout.addWidget(self.addBTN2)
 
 		self.main_layout.addLayout(self.set_layout)
 
+	def setClear(self):
+
+		count = self.listscrollArea.scroll_area_widget_layout.count()
+		for i in range(count):
+			Widgwt = self.listscrollArea.scroll_area_widget_layout.itemAt(i).widget()
+			Widgwt.deleteLater()
+
+	def addSel_list(self):
+		sel = cmds.ls(sl=1, l=1)
+		if sel:
+			count = self.listscrollArea.scroll_area_widget_layout.count()
+			listSetBtn = Buttons_set_name("L {}".format(str(count + 1)), sel)
+			self.listscrollArea.scroll_area_widget_layout.addWidget(listSetBtn)
+			listSetBtn.itClickedName.connect(self.viewTypelist)
+
+	def selectedSet(self, list):
+		pass
 
 	def clear_Widget_listType(self):
 		Count = self.widget_layout.count()
@@ -643,24 +652,7 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		self.model.clear()
 		self.List_BTN.set_Count(0)
 
-	def menuUI(self):
-		self.menu = QtWidgets.QMenuBar()
-		self.EditMenu = self.menu.addMenu(QtGui.QIcon(os.path.join(root_, "icons/tool.svg")), "Edit")
-		# self.EditMenu.setTearOffEnabled(True)
-
-		self.Edit_menu_duplicate = QtWidgets.QAction("duplicate name", self)
-		self.Edit_menu_duplicate.setIcon(QtGui.QIcon(os.path.join(root_, "icons/duplicate.png")))
-		self.EditMenu.addAction(self.Edit_menu_duplicate)
-		self.Edit_menu_duplicate.triggered.connect(self.GetDuplicate)
-
-		self.Edit_menu_Ru = QtWidgets.QAction("Ru name", self)
-		self.Edit_menu_Ru.setIcon(QtGui.QIcon(os.path.join(root_, "icons/Ru.png")))
-		self.EditMenu.addAction(self.Edit_menu_Ru)
-		self.Edit_menu_Ru.triggered.connect(self.GetRu)
-
-
-		self.main_layout.addWidget(self.menu)
-		# self.sortActions.triggered.connect(self.sortMethodChanged)
+	# self.sortActions.triggered.connect(self.sortMethodChanged)
 	def GetRu(self):
 
 		ABC = get_json_data("alphabet.json")
@@ -681,10 +673,9 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 					elif a not in ABC["EN"].keys():
 						if ord(a) == ABC["RU"][a]:
-							print("Name ['{}'], Ru = ['{}']".format(shortName,a))
+							print("Name ['{}'], Ru = ['{}']".format(shortName, a))
 							RUList.append(i)
 							break
-
 
 		RUlib["Ru"] = RUList
 
@@ -716,7 +707,6 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 	def GetDuplicate(self):
 
-
 		ListLong_Sel = cmds.ls(sl=1, l=1)
 		ListLong_Hi = cmds.ls(sl=1, dag=1, l=1)
 		ListLong_Hi.extend(ListLong_Sel)
@@ -731,10 +721,8 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 				shortName2 = self.get_short_Name(i)
 				if shortName == shortName2:
 					if a not in newList:
-
 						newList.append(a)
 					if i not in newList:
-
 						newList.append(i)
 
 		librLisr["duplicate"] = newList
@@ -772,17 +760,16 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		shortName = longName.rpartition("|")[-1]
 		return shortName
 
-
-	def gettypeLists(self, Sellist = []):
+	def gettypeLists(self, Sellist=[]):
 
 		librLisr = {}
-		shapelist =[]
+		shapelist = []
 
 		librLisr["TypeAll"] = list(Sellist)
 
 		if Sellist:
 			for i in Sellist:
-				type  = cmds.nodeType(i)
+				type = cmds.nodeType(i)
 
 				if type == "transform":
 					shape = cmds.listRelatives(i, shapes=1, f=1)
@@ -797,7 +784,8 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 								if shapeType == "baseLattice":
 									shapeType = "lattice"
 
-								elif shapeType in ["areaLight", "ambientLight", "directionalLight", "volumeLight", "pointLight", "spotLight"]:
+								elif shapeType in ["areaLight", "ambientLight", "directionalLight", "volumeLight",
+												   "pointLight", "spotLight"]:
 
 									shapeType = "ambientLight"
 
@@ -810,19 +798,20 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 									librLisr["shape"] = [shape]
 
 					else:
-						if type in librLisr.keys() :
+						if type in librLisr.keys():
 							librLisr[type].append(i)
 						else:
-							librLisr[type] =  [i]
+							librLisr[type] = [i]
 
 				else:
 					if type == "joint":
-						if type in librLisr.keys() :
+						if type in librLisr.keys():
 							librLisr[type].append(i)
 						else:
-							librLisr[type] =  [i]
+							librLisr[type] = [i]
 
-					elif type in ["parentConstraint", "pointConstraint", "orientConstraint", "scaleConstraint","aimConstraint", "poleVectorConstraint"]:
+					elif type in ["parentConstraint", "pointConstraint", "orientConstraint", "scaleConstraint",
+								  "aimConstraint", "poleVectorConstraint"]:
 						type = "Constraint"
 						if type in librLisr.keys():
 							librLisr[type].append(i)
@@ -840,12 +829,11 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 							else:
 								librLisr["indefined"] = [i]
 
-
 		librLisr["shape"] = list(set(shapelist))
 
 		self.Creat_ButtonType(librLisr)
 
-	def Creat_ButtonType(self, library = {}):
+	def Creat_ButtonType(self, library={}):
 
 		for i in library.keys():
 			if library[i]:
@@ -875,17 +863,14 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 				Widget.deleteLater()
 
-
 		if self.List_BTN.popMenu_Selected.isChecked():
-			ListLongName    = cmds.ls(sl=1, l=1)
+			ListLongName = cmds.ls(sl=1, l=1)
 
 		elif self.List_BTN.popMenu_Hierarchy.isChecked():
 			ListLong_Sel = cmds.ls(sl=1, l=1)
 			ListLong_Hi = cmds.ls(sl=1, dag=1, l=1)
 			ListLong_Hi.extend(ListLong_Sel)
 			ListLongName = set(ListLong_Hi)
-
-
 
 		self.gettypeLists(ListLongName)
 		self.model.clear()
@@ -913,7 +898,8 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 				if grandChildren:
 					child.appendRows(grandChildren)
 
-				# print("child {}, grandChildren {}".format(child, grandChildren))
+			# print("child {}, grandChildren {}".format(child, grandChildren))
+
 	#
 	def selectionChanged(self):
 
@@ -932,7 +918,6 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		"""
 		action = self.sortActions.checkedAction()
 
-
 		if action is self.sortAction1:
 			# disable sorting. will return to the original order
 			# of the source model.
@@ -942,13 +927,13 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 			# we only have one column. sort on column 0
 			self.sortModel.sort(0)
 
-class DagTreeProxyModel(QtCore.QSortFilterProxyModel):
 
+class DagTreeProxyModel(QtCore.QSortFilterProxyModel):
 	DAG_TYPES = {
-		'NURBS Objects'  	: [om.MFn.kNurbsSurface, om.MFn.kNurbsCurve],
-		'Polygon Objects'	: [om.MFn.kPolyCreator],
-		'Cameras'			: [om.MFn.kCamera],
-		'Lights'			: [om.MFn.kLight],
+		'NURBS Objects': [om.MFn.kNurbsSurface, om.MFn.kNurbsCurve],
+		'Polygon Objects': [om.MFn.kPolyCreator],
+		'Cameras': [om.MFn.kCamera],
+		'Lights': [om.MFn.kLight],
 	}
 
 	def __init__(self, *args, **kwargs):
@@ -986,13 +971,15 @@ class DagTreeProxyModel(QtCore.QSortFilterProxyModel):
 			# print (False)
 			return False
 		return True
-		# return super(DagTreeProxyModel, self).filterAcceptsRow(sourceRow, sourceParent)
+	# return super(DagTreeProxyModel, self).filterAcceptsRow(sourceRow, sourceParent)
+
 
 class DagTreeItem(QtGui.QStandardItem):
 	"""
 	DagTreeItem(QtGui.QStandardItem)
 	QStandardItem subclass that represents a Dag node
 	"""
+
 	def __init__(self, dagObj=None):
 		super(DagTreeItem, self).__init__()
 
@@ -1005,12 +992,9 @@ class DagTreeItem(QtGui.QStandardItem):
 
 		# self.setIcon((QtGui.QIcon(os.path.join(root_, "icons/tool.svg")),"Edit"))
 
-
 		# self.setData(self.sortKey, QtCore.Qt.UserRole)
 		if self.fullname:
 			self.set_icon()
-
-
 
 	def __repr__(self):
 		return "<%s: %s>" % (self.__class__.__name__, self.name)
@@ -1032,14 +1016,13 @@ class DagTreeItem(QtGui.QStandardItem):
 		key = '%s%s%s' % (self.apiType, self.shapeApiType, self.name)
 		return key
 
-
-	def set_icon(self, stateShape = None):
+	def set_icon(self, stateShape=None):
 
 		type = cmds.nodeType(self.fullname)
 		if self.fullname:
 			if type == "transform":
 
-				shape = cmds.listRelatives(self.fullname, shapes = 1, f= 1)
+				shape = cmds.listRelatives(self.fullname, shapes=1, f=1)
 				if shape:
 					shapeType = cmds.nodeType(shape[0])
 					type = shapeType
@@ -1066,15 +1049,17 @@ class DagTreeItem(QtGui.QStandardItem):
 	def parentname(self):
 		return self.fullname.rsplit('|', 1)[0]
 
+
 def get_json_data(str):
-    listButtonsName_path_ = os.path.join(root_, str)
-    json_data = None
-    with open(listButtonsName_path_, "r") as inFile:
-        json_data = json.load(inFile)
+	listButtonsName_path_ = os.path.join(root_, str)
+	json_data = None
+	with open(listButtonsName_path_, "r") as inFile:
+		json_data = json.load(inFile)
 
-    return json_data
+	return json_data
 
-def set_json_data(json_data, str ):
-    listButtonsName_path_ = os.path.join(root_, str)
-    with open(listButtonsName_path_, "w") as outfile:
-        json.dump(json_data, outfile, indent=4)
+
+def set_json_data(json_data, str):
+	listButtonsName_path_ = os.path.join(root_, str)
+	with open(listButtonsName_path_, "w") as outfile:
+		json.dump(json_data, outfile, indent=4)
