@@ -50,14 +50,11 @@ class Buttons_set_name(QtWidgets.QPushButton):
 
 	def setNewMame(self):
 
-		btnText = self.text()
+
 		text = self.NameLineEdit.text()
 		self.setText(text)
 		self.setToolTip(text)
-
 		self.Rename_bnt()
-
-		print("Rename button [{}] in [{}]".format(btnText, text))
 
 	def enterEvent(self, event):
 		self.setCursor(QtCore.Qt.PointingHandCursor)
@@ -84,21 +81,29 @@ class Buttons_set_name(QtWidgets.QPushButton):
 
 		self.popMenu = QtWidgets.QMenu(self)
 
-		self.popMenuAdd = QtWidgets.QAction("Rename", self)
-		self.popMenu.addAction(self.popMenuAdd)
-		self.popMenuAdd.triggered.connect(self.Rename_bnt)
-
-		self.popMenuDel = QtWidgets.QAction("Delete", self)
-		self.popMenu.addAction(self.popMenuDel)
-		self.popMenuDel.triggered.connect(self.Delete_btn)
+		self.popMenuAdd_obj = QtWidgets.QAction("Add object", self)
+		self.popMenu.addAction(self.popMenuAdd_obj)
+		self.popMenuAdd_obj.triggered.connect(self.Add_object)
 
 		self.popMenuDel_obj = QtWidgets.QAction("Remove object", self)
 		self.popMenu.addAction(self.popMenuDel_obj)
 		self.popMenuDel_obj.triggered.connect(self.del_object)
 
-		self.popMenuAdd_obj = QtWidgets.QAction("Add object", self)
-		self.popMenu.addAction(self.popMenuAdd_obj)
-		self.popMenuAdd_obj.triggered.connect(self.Add_object)
+		self.popMenuAdd = QtWidgets.QAction("Rename", self)
+		self.popMenu.addAction(self.popMenuAdd)
+		self.popMenuAdd.triggered.connect(self.Rename_bnt)
+
+		self.popMenuDel = QtWidgets.QAction("Delete Set", self)
+		self.popMenu.addAction(self.popMenuDel)
+		self.popMenuDel.triggered.connect(self.Delete_btn)
+
+		self.popMenuCraetSet = QtWidgets.QAction("Creat set in Outliner", self)
+		self.popMenu.addAction(self.popMenuCraetSet)
+		self.popMenuCraetSet.triggered.connect(self.Creat_Set)
+
+	def Creat_Set(self):
+		textname = self.text()
+		set = cmds.sets(n = textname)
 
 	def Rename_bnt(self):
 		vis = self.NameLineEdit.isVisible()
@@ -113,15 +118,21 @@ class Buttons_set_name(QtWidgets.QPushButton):
 		self.deleteLater()
 
 	def Add_object(self):
-		pass
+
+		select = cmds.ls(sl=1, l=1)
+		self.listsel.extend(select)
+		self.listsel = list(set(self.listsel))
+
+		self.itClickedName.emit(self.listsel)
 
 	def del_object(self):
 
 		select = cmds.ls(sl=1, l=1)
 		for i in select:
 			if i in self.listsel:
-				del self.listsel[i]
+				 self.listsel.remove(i)
 
+		self.itClickedName.emit(self.listsel)
 
 
 class Buttons_ADD(QtWidgets.QPushButton):
