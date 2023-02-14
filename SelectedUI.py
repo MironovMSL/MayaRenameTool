@@ -459,7 +459,7 @@ class ButtonType(QtWidgets.QPushButton):
 			self.isTypeList.emit(self.TypeList)
 
 	def set_icon(self):
-		if self.TypeIcon not in ["duplicate", "Ru"] and cmds.nodeType(self.TypeIcon) == "skinCluster":
+		if self.TypeIcon not in typeList and cmds.nodeType(self.TypeIcon) == "skinCluster":
 			self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/skinJoint.png")))
 			self.skinCluster = True
 
