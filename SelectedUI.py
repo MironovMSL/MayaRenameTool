@@ -407,6 +407,7 @@ class ButtonType(QtWidgets.QPushButton):
 		self.TypeIcon = TypeIcon
 		self.list = TypeList
 		self.stateMenu = False
+		self.skinCluster = None
 
 		self.setObjectName(TypeIcon + "id")
 		self.setFixedSize(16, 16)
@@ -458,8 +459,11 @@ class ButtonType(QtWidgets.QPushButton):
 			self.isTypeList.emit(self.TypeList)
 
 	def set_icon(self):
+		if self.TypeIcon not in ["duplicate", "Ru"] and cmds.nodeType(self.TypeIcon) == "skinCluster":
+			self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/skinJoint.png")))
+			self.skinCluster = True
 
-		if self.TypeIcon in typeList:
+		elif self.TypeIcon in typeList:
 			self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/{}.png".format(self.TypeIcon))))
 		else:
 			self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/menuIconConstraints.png")))
@@ -482,6 +486,7 @@ class ButtonType(QtWidgets.QPushButton):
 	def leaveEvent(self, event):
 		self.setCursor(QtCore.Qt.ArrowCursor)
 		super(ButtonType, self).leaveEvent(event)
+
 
 
 class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
@@ -519,6 +524,12 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		self.Edit_menu_Ru.setIcon(QtGui.QIcon(os.path.join(root_, "icons/Ru.png")))
 		self.EditMenu.addAction(self.Edit_menu_Ru)
 		self.Edit_menu_Ru.triggered.connect(self.GetRu)
+
+		self.Edit_menu_skinJoint = QtWidgets.QAction("Jion in skin mesh", self)
+		self.Edit_menu_skinJoint.setIcon(QtGui.QIcon(os.path.join(root_, "icons/skinJoint.png")))
+		self.EditMenu.addAction(self.Edit_menu_skinJoint)
+		self.Edit_menu_skinJoint.triggered.connect(self.GetSkinJoint)
+
 
 		self.main_layout.addWidget(self.menu)
 
@@ -634,6 +645,72 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 		self.main_layout.addLayout(self.set_layout)
 
+	def GetSkinJoint(self):
+
+
+		sel_list = cmds.ls(sl=1, l=1)
+
+		geo = []
+		geoshape = []
+		libSkinCluster = {}
+
+		for i in sel_list:
+			type = cmds.nodeType(i)
+
+			if type == "transform":
+				shape = cmds.listRelatives(i, shapes=1)
+
+				if shape:
+					shapeType = cmds.nodeType(shape[0])
+					if shapeType == "mesh":
+						geo.append(i)
+						geoshape.append(shape[0])
+
+			elif type == "mesh":
+				transform = cmds.listRelatives(i, p=True)[0]
+				geo.append(transform)
+				geoshape.append(i)
+
+		if geo:
+			clusters = cmds.ls(type='skinCluster')
+			for i in clusters:
+
+				geoshapeCluster = cmds.skinCluster(i, q=1, g=1)[0]
+
+				if geoshapeCluster in geoshape:
+					SkinJoints = cmds.skinCluster(i, q=1, wi=1)
+
+					libSkinCluster[i] = SkinJoints
+
+			Count = self.widget_layout.count()
+			if Count:
+				for i in range(Count):
+					Widget = self.widget_layout.itemAt(i).widget()
+					WidgetName = Widget.skinCluster
+					if WidgetName:
+						Widget.deleteLater()
+
+			if libSkinCluster:
+				self.model.clear()
+				self.Creat_ButtonType(libSkinCluster)
+
+				Count = self.widget_layout.count()
+				if Count:
+					for i in range(Count):
+						Widget = self.widget_layout.itemAt(i).widget()
+						WidgetName = Widget.skinCluster
+
+						if WidgetName:
+							cmds.select(Widget.TypeList, r=1)
+
+			else:
+				print("No Bind skin")
+
+
+
+		else:
+			print("Reuired selection is only one poly mesh !")
+
 	def setClear(self):
 
 		count = self.listscrollArea.scroll_area_widget_layout.count()
@@ -649,8 +726,7 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 			self.listscrollArea.scroll_area_widget_layout.addWidget(listSetBtn)
 			listSetBtn.itClickedName.connect(self.viewTypelist)
 
-	def selectedSet(self, list):
-		pass
+
 
 	def clear_Widget_listType(self):
 		Count = self.widget_layout.count()
