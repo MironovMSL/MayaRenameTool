@@ -487,6 +487,87 @@ class ButtonType(QtWidgets.QPushButton):
 		self.setCursor(QtCore.Qt.ArrowCursor)
 		super(ButtonType, self).leaveEvent(event)
 
+class ButtonSkinClusterType(QtWidgets.QPushButton):
+	isTypeList = QtCore.Signal(list)
+	def __init__(self,Mesh, Shape, libtSkinCluster={}):
+		super(ButtonSkinClusterType, self).__init__()
+
+		self.Mesh = Mesh
+		self.shortName = self.Mesh.rpartition("|")[-1]
+		self.Shape = Shape
+		self.libtSkinCluster = libtSkinCluster
+		self.skinCluster = True
+		self.TypeList = list(libtSkinCluster.keys())
+
+		self.setObjectName(Mesh + "SkinClusterid")
+		self.setFixedSize(16, 16)
+		self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/skinJoint.png")))
+		self.setToolTip(Mesh + " SkinCluster")
+
+		self.creat_context_menu()
+
+
+	def creat_context_menu(self):
+		self.popMenu = QtWidgets.QMenu(self)
+		# self.popMenu.setTearOffEnabled(True)
+		self.popMenu.setTitle(self.Mesh)
+
+		self.popMenu_Selobj = QtWidgets.QAction("Sel {}".format(self.shortName), self)
+		# self.popMenu_Shape.setCheckable(True)
+		self.popMenu.addAction(self.popMenu_Selobj)
+		self.popMenu_Selobj.triggered.connect(self.SelMesh)
+
+
+
+		# if len(self.libtSkinCluster) > 1:
+		# 	# self.popMenu.addSeparator()
+		# 	self.separator_SkinCluster = QtWidgets.QAction("SkinCluster", self)
+		# 	self.separator_SkinCluster.setSeparator(True)
+		# 	self.separator_SkinCluster.priority()
+		# 	self.popMenu.addAction(self.separator_SkinCluster)
+		#
+		# 	# in Text
+		# 	self.popMenu_InText_sub = QtWidgets.QAction("in text field", self)
+		# 	self.popMenu_InText_sub.setCheckable(True)
+		# 	# self.popMenu_InText_sub.setChecked(True)
+		# 	self.popMenu.addAction(self.popMenu_InText_sub)
+		# 	self.popMenu_InText_sub.triggered.connect(self.State_in_text_field)
+		#
+		# 	# in Selection object
+		# 	self.popMenu_Object_sub = QtWidgets.QAction("in Selected object", self)
+		# 	self.popMenu_Object_sub.setCheckable(True)
+		# 	self.popMenu_Object_sub.setChecked(True)
+		# 	self.popMenu.addAction(self.popMenu_Object_sub)
+		# 	self.popMenu_Object_sub.triggered.connect(self.State_in_Selected_object)
+		#
+		# 	self.action_group_Buttons = QtWidgets.QActionGroup(self)
+		#
+		# 	self.action_group_Buttons.addAction(self.popMenu_InText_sub)
+		# 	self.action_group_Buttons.addAction(self.popMenu_Object_sub)
+
+	def SelMesh(self):
+		cmds.select(self.Mesh)
+	def mouseReleaseEvent(self, event):
+		super(ButtonSkinClusterType, self).mouseReleaseEvent(event)
+		self.isTypeList.emit(self.TypeList)
+
+	def mousePressEvent(self, event):
+		super(ButtonSkinClusterType, self).mousePressEvent(event)
+
+
+		if event.buttons() == QtCore.Qt.RightButton:
+			self.popMenu.exec_(self.mapToGlobal(event.pos()))
+
+	def enterEvent(self, event):
+		self.setCursor(QtCore.Qt.PointingHandCursor)
+		super(ButtonSkinClusterType, self).enterEvent(event)
+
+	def leaveEvent(self, event):
+		self.setCursor(QtCore.Qt.ArrowCursor)
+		super(ButtonSkinClusterType, self).leaveEvent(event)
+
+
+
 
 
 class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
@@ -653,6 +734,7 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		geo = []
 		geoshape = []
 		libSkinCluster = {}
+		libMesh = {}
 
 		for i in sel_list:
 			type = cmds.nodeType(i)
@@ -673,14 +755,28 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 		if geo:
 			clusters = cmds.ls(type='skinCluster')
-			for i in clusters:
 
-				geoshapeCluster = cmds.skinCluster(i, q=1, g=1)[0]
+			for mesh in geo:
+				libMesh[mesh] = {}
 
-				if geoshapeCluster in geoshape:
-					SkinJoints = cmds.skinCluster(i, q=1, wi=1)
+				shape = cmds.listRelatives(mesh, shapes=1)[0]
+				libMesh[mesh]["shape"] = shape
+				libMesh[mesh]["skinCluster"] = {}
 
-					libSkinCluster[i] = SkinJoints
+				for i in clusters:
+
+					geoshapeCluster = cmds.skinCluster(i, q=1, g=1)[0]
+
+					if geoshapeCluster == shape:
+
+						SkinJoints = cmds.skinCluster(i, q=1, wi=1)
+						libMesh[mesh]["skinCluster"][i] = SkinJoints
+
+				if not libMesh[mesh]["skinCluster"]:
+
+					del libMesh[mesh]
+
+						# libSkinCluster[i] = SkinJoints
 
 			Count = self.widget_layout.count()
 			if Count:
@@ -690,9 +786,28 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 					if WidgetName:
 						Widget.deleteLater()
 
-			if libSkinCluster:
+			if libMesh:
 				self.model.clear()
-				self.Creat_ButtonType(libSkinCluster)
+				for a in libMesh.keys():
+					btn = ButtonSkinClusterType(a,libMesh[a]["shape"],libMesh[a]["skinCluster"] )
+					btn.isTypeList.connect(self.viewTypelist)
+					self.widget_layout.addWidget(btn)
+
+				# self.Creat_ButtonType(libMesh)
+
+				# class ButtonSkinClusterType(QtWidgets.QPushButton):
+				# 	def __init__(self, Mesh, Shape, libtSkinCluster={}):
+
+				# def Creat_ButtonType(self, library={}):
+				#
+				# 	for i in library.keys():
+				# 		if library[i]:
+				# 			btn = ButtonType(i, library[i])
+				#
+				# 			btn.isTypeList.connect(self.viewTypelist)
+				# 			self.widget_layout.addWidget(btn)
+
+
 
 				Count = self.widget_layout.count()
 				if Count:
@@ -706,10 +821,10 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 			else:
 				print("No Bind skin")
 
-
-
 		else:
 			print("Reuired selection is only one poly mesh !")
+
+		print(libMesh)
 
 	def setClear(self):
 
