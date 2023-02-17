@@ -502,7 +502,7 @@ class ButtonSkinClusterType(QtWidgets.QPushButton):
 		self.setObjectName(Mesh + "SkinClusterid")
 		self.setFixedSize(16, 16)
 		self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/skinJoint.png")))
-		self.setToolTip(Mesh + " SkinCluster")
+		self.setToolTip(self.shortName + " SkinCluster")
 
 		self.creat_context_menu()
 
