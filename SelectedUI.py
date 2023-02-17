@@ -512,7 +512,7 @@ class ButtonSkinClusterType(QtWidgets.QPushButton):
 		# self.popMenu.setTearOffEnabled(True)
 		self.popMenu.setTitle(self.Mesh)
 
-		self.popMenu_Selobj = QtWidgets.QAction("Sel {}".format(self.shortName), self)
+		self.popMenu_Selobj = QtWidgets.QAction("Sel '{}'".format(self.shortName), self)
 		# self.popMenu_Shape.setCheckable(True)
 		self.popMenu.addAction(self.popMenu_Selobj)
 		self.popMenu_Selobj.triggered.connect(self.SelMesh)
