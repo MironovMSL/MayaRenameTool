@@ -12,7 +12,7 @@ root_ = os.path.dirname(__file__)
 typeList = ["mesh", "nurbsSurface", "nurbsCurve", "joint", "locator", "shape", "follicle",
 			"transform", "camera", "baseLattice", "lattice", "clusterHandle", "indefined", "TypeAll",
 			"areaLight", "ambientLight", "directionalLight", "volumeLight", "pointLight", "spotLight",
-			"duplicate", "Ru", "Constraint",
+			"duplicate", "Ru", "Constraint", "skinCluster",
 			"parentConstraint", "pointConstraint", "orientConstraint", "scaleConstraint", "aimConstraint",
 			"poleVectorConstraint"]
 
