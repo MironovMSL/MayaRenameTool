@@ -50,7 +50,6 @@ class Buttons_set_name(QtWidgets.QPushButton):
 
 	def setNewMame(self):
 
-
 		text = self.NameLineEdit.text()
 		self.setText(text)
 		self.setToolTip(text)
@@ -68,14 +67,11 @@ class Buttons_set_name(QtWidgets.QPushButton):
 		self.itClickedName.emit(self.listsel)
 		super(Buttons_set_name, self).mouseReleaseEvent(event)
 
-
 	def mousePressEvent(self, event):
 
 		super(Buttons_set_name, self).mousePressEvent(event)
 		if event.buttons() == QtCore.Qt.RightButton:
-
 			self.popMenu.exec_(self.mapToGlobal(event.pos()))
-
 
 	def creat_context_menu(self):
 
@@ -103,7 +99,7 @@ class Buttons_set_name(QtWidgets.QPushButton):
 
 	def Creat_Set(self):
 		textname = self.text()
-		set = cmds.sets(n = textname)
+		set = cmds.sets(n=textname)
 
 	def Rename_bnt(self):
 		vis = self.NameLineEdit.isVisible()
@@ -130,7 +126,7 @@ class Buttons_set_name(QtWidgets.QPushButton):
 		select = cmds.ls(sl=1, l=1)
 		for i in select:
 			if i in self.listsel:
-				 self.listsel.remove(i)
+				self.listsel.remove(i)
 
 		self.itClickedName.emit(self.listsel)
 
@@ -175,6 +171,7 @@ class Buttons_ADD(QtWidgets.QPushButton):
 
 	def setClear(self):
 		self.itToggleClear.emit()
+
 
 class SetScrollArea(QtWidgets.QScrollArea):
 
@@ -293,7 +290,7 @@ class SetScrollArea(QtWidgets.QScrollArea):
 			widet.setVisible(1)
 			self.scroll_area_widget_layout.insertWidget(indexX, widet)
 
-			# print("this name [{}] already exists in [{}]".format(Name, self.objectName()))
+		# print("this name [{}] already exists in [{}]".format(Name, self.objectName()))
 
 
 		else:
@@ -310,7 +307,7 @@ class SetScrollArea(QtWidgets.QScrollArea):
 
 			event.source().setVisible(1)
 
-			# print("this name [{}] move in [{}]".format(Name, self.objectName()))
+		# print("this name [{}] move in [{}]".format(Name, self.objectName()))
 
 
 class ListBTN(QtWidgets.QPushButton):
@@ -487,73 +484,112 @@ class ButtonType(QtWidgets.QPushButton):
 		self.setCursor(QtCore.Qt.ArrowCursor)
 		super(ButtonType, self).leaveEvent(event)
 
+
 class ButtonSkinClusterType(QtWidgets.QPushButton):
 	isTypeList = QtCore.Signal(list)
-	def __init__(self,Mesh, Shape, libtSkinCluster={}):
+
+	def __init__(self, Mesh, Shape, libtSkinCluster={}):
 		super(ButtonSkinClusterType, self).__init__()
 
-		self.Mesh = Mesh
-		self.shortName = self.Mesh.rpartition("|")[-1]
-		self.Shape = Shape
-		self.libtSkinCluster = libtSkinCluster
-		self.skinCluster = True
-		self.TypeList = list(libtSkinCluster.keys())
+		self.Mesh     	      = Mesh
+		self.shortName        = self.Mesh.rpartition("|")[-1]
+		self.Shape            = Shape
+		self.libtSkinCluster  = libtSkinCluster
+		self.skinCluster      = True
+		self.TypeList         = None
 
-		self.setObjectName(Mesh + "SkinClusterid")
+		self.setObjectName(self.shortName + "SkinClusterid")
 		self.setFixedSize(16, 16)
 		self.setIcon(QtGui.QIcon(os.path.join(root_, "icons/skinJoint.png")))
 		self.setToolTip(self.shortName + " SkinCluster")
 
 		self.creat_context_menu()
 
-
 	def creat_context_menu(self):
 		self.popMenu = QtWidgets.QMenu(self)
-		# self.popMenu.setTearOffEnabled(True)
-		self.popMenu.setTitle(self.Mesh)
+		self.popMenu.setTearOffEnabled(True)
+		self.popMenu.setTitle(self.shortName)
 
-		self.popMenu_Selobj = QtWidgets.QAction("Sel '{}'".format(self.shortName), self)
+		self.popMenu_Selobj = QtWidgets.QAction("Select '{}'".format(self.shortName), self)
 		# self.popMenu_Shape.setCheckable(True)
 		self.popMenu.addAction(self.popMenu_Selobj)
 		self.popMenu_Selobj.triggered.connect(self.SelMesh)
 
+		if len(self.libtSkinCluster) > 1:
+			# self.popMenu.addSeparator()
+			self.separator_SkinCluster = QtWidgets.QAction("SkinCluster", self)
+			self.separator_SkinCluster.setSeparator(True)
+			self.separator_SkinCluster.priority()
+			self.popMenu.addAction(self.separator_SkinCluster)
+
+			self.action_group_SkinCluster = QtWidgets.QActionGroup(self)
+			for enum, i in enumerate(self.libtSkinCluster.keys()):
+
+				if enum > 0:
+
+					popMenu = QtWidgets.QAction(i, self)
+					popMenu.setCheckable(True)
+					self.popMenu.addAction(popMenu)
+					self.action_group_SkinCluster.addAction(popMenu)
+					popMenu.triggered.connect(self.list_jointSkin)
+
+				else:
+					self.TypeList = self.libtSkinCluster[i]
+					popMenu       = QtWidgets.QAction(i, self)
+
+					popMenu.setCheckable(True)
+					popMenu.setChecked(True)
+					self.popMenu.addAction(popMenu)
+					self.action_group_SkinCluster.addAction(popMenu)
+					popMenu.triggered.connect(self.list_jointSkin)
+
+		else:
+			self.separator_SkinCluster = QtWidgets.QAction("SkinCluster", self)
+			self.separator_SkinCluster.setSeparator(True)
+			self.separator_SkinCluster.priority()
+			self.popMenu.addAction(self.separator_SkinCluster)
+
+			skinCluster = list(self.libtSkinCluster.keys())[0]
+
+			self.TypeList = self.libtSkinCluster[skinCluster]
+			popMenu = QtWidgets.QAction(skinCluster, self)
+			self.popMenu.addAction(popMenu)
+			popMenu.triggered.connect(lambda: self.list_jointSkin(count=False))
 
 
-		# if len(self.libtSkinCluster) > 1:
-		# 	# self.popMenu.addSeparator()
-		# 	self.separator_SkinCluster = QtWidgets.QAction("SkinCluster", self)
-		# 	self.separator_SkinCluster.setSeparator(True)
-		# 	self.separator_SkinCluster.priority()
-		# 	self.popMenu.addAction(self.separator_SkinCluster)
-		#
-		# 	# in Text
-		# 	self.popMenu_InText_sub = QtWidgets.QAction("in text field", self)
-		# 	self.popMenu_InText_sub.setCheckable(True)
-		# 	# self.popMenu_InText_sub.setChecked(True)
-		# 	self.popMenu.addAction(self.popMenu_InText_sub)
-		# 	self.popMenu_InText_sub.triggered.connect(self.State_in_text_field)
-		#
-		# 	# in Selection object
-		# 	self.popMenu_Object_sub = QtWidgets.QAction("in Selected object", self)
-		# 	self.popMenu_Object_sub.setCheckable(True)
-		# 	self.popMenu_Object_sub.setChecked(True)
-		# 	self.popMenu.addAction(self.popMenu_Object_sub)
-		# 	self.popMenu_Object_sub.triggered.connect(self.State_in_Selected_object)
-		#
-		# 	self.action_group_Buttons = QtWidgets.QActionGroup(self)
-		#
-		# 	self.action_group_Buttons.addAction(self.popMenu_InText_sub)
-		# 	self.action_group_Buttons.addAction(self.popMenu_Object_sub)
+
+
+		self.popMenu.addSeparator()
+
+		self.popMenu_ListSCluster = QtWidgets.QAction("Select SkinCluster", self)
+		self.popMenu.addAction(self.popMenu_ListSCluster)
+		self.popMenu_ListSCluster.triggered.connect(self.selSkinCluster)
+
+
+
+
+	def selSkinCluster(self):
+		self.isTypeList.emit(list(self.libtSkinCluster.keys()))
+	def list_jointSkin(self, count=True):
+
+		if count:
+			skinCluster = self.action_group_SkinCluster.checkedAction().text()
+			self.TypeList = self.libtSkinCluster[skinCluster]
+			self.isTypeList.emit(self.TypeList)
+		else:
+			self.isTypeList.emit(self.TypeList)
+
+		print(self.TypeList)
 
 	def SelMesh(self):
 		cmds.select(self.Mesh)
+
 	def mouseReleaseEvent(self, event):
 		super(ButtonSkinClusterType, self).mouseReleaseEvent(event)
 		self.isTypeList.emit(self.TypeList)
 
 	def mousePressEvent(self, event):
 		super(ButtonSkinClusterType, self).mousePressEvent(event)
-
 
 		if event.buttons() == QtCore.Qt.RightButton:
 			self.popMenu.exec_(self.mapToGlobal(event.pos()))
@@ -565,9 +601,6 @@ class ButtonSkinClusterType(QtWidgets.QPushButton):
 	def leaveEvent(self, event):
 		self.setCursor(QtCore.Qt.ArrowCursor)
 		super(ButtonSkinClusterType, self).leaveEvent(event)
-
-
-
 
 
 class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
@@ -610,7 +643,6 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		self.Edit_menu_skinJoint.setIcon(QtGui.QIcon(os.path.join(root_, "icons/skinJoint.png")))
 		self.EditMenu.addAction(self.Edit_menu_skinJoint)
 		self.Edit_menu_skinJoint.triggered.connect(self.GetSkinJoint)
-
 
 		self.main_layout.addWidget(self.menu)
 
@@ -712,10 +744,10 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 	def setupUI_set(self):
 
-		self.addsetBtn             = Buttons_ADD()
-		self.listscrollArea        = SetScrollArea()
+		self.addsetBtn = Buttons_ADD()
+		self.listscrollArea = SetScrollArea()
 		self.listscrollArea_layout = QtWidgets.QHBoxLayout()
-		self.set_layout            = QtWidgets.QHBoxLayout()
+		self.set_layout = QtWidgets.QHBoxLayout()
 
 		self.addsetBtn.clicked.connect(self.addSel_list)
 		self.addsetBtn.itToggleClear.connect(self.setClear)
@@ -727,7 +759,6 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		self.main_layout.addLayout(self.set_layout)
 
 	def GetSkinJoint(self):
-
 
 		sel_list = cmds.ls(sl=1, l=1)
 
@@ -768,15 +799,13 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 					geoshapeCluster = cmds.skinCluster(i, q=1, g=1)[0]
 
 					if geoshapeCluster == shape:
-
 						SkinJoints = cmds.skinCluster(i, q=1, wi=1)
 						libMesh[mesh]["skinCluster"][i] = SkinJoints
 
 				if not libMesh[mesh]["skinCluster"]:
-
 					del libMesh[mesh]
 
-						# libSkinCluster[i] = SkinJoints
+				# libSkinCluster[i] = SkinJoints
 
 			Count = self.widget_layout.count()
 			if Count:
@@ -789,9 +818,11 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 			if libMesh:
 				self.model.clear()
 				for a in libMesh.keys():
-					btn = ButtonSkinClusterType(a,libMesh[a]["shape"],libMesh[a]["skinCluster"] )
+					btn = ButtonSkinClusterType(a, libMesh[a]["shape"], libMesh[a]["skinCluster"])
 					btn.isTypeList.connect(self.viewTypelist)
 					self.widget_layout.addWidget(btn)
+
+
 
 				# self.Creat_ButtonType(libMesh)
 
@@ -806,8 +837,6 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 				#
 				# 			btn.isTypeList.connect(self.viewTypelist)
 				# 			self.widget_layout.addWidget(btn)
-
-
 
 				Count = self.widget_layout.count()
 				if Count:
@@ -824,7 +853,7 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		else:
 			print("Reuired selection is only one poly mesh !")
 
-		print(libMesh)
+
 
 	def setClear(self):
 
@@ -840,8 +869,6 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 			listSetBtn = Buttons_set_name("L {}".format(str(count + 1)), sel)
 			self.listscrollArea.scroll_area_widget_layout.addWidget(listSetBtn)
 			listSetBtn.itClickedName.connect(self.viewTypelist)
-
-
 
 	def clear_Widget_listType(self):
 		Count = self.widget_layout.count()
@@ -1100,7 +1127,7 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 				if grandChildren:
 					child.appendRows(grandChildren)
 
-			# print("child {}, grandChildren {}".format(child, grandChildren))
+		# print("child {}, grandChildren {}".format(child, grandChildren))
 
 	#
 	def selectionChanged(self):
@@ -1173,7 +1200,7 @@ class DagTreeProxyModel(QtCore.QSortFilterProxyModel):
 			# print (False)
 			return False
 		return True
-	# return super(DagTreeProxyModel, self).filterAcceptsRow(sourceRow, sourceParent)
+# return super(DagTreeProxyModel, self).filterAcceptsRow(sourceRow, sourceParent)
 
 
 class DagTreeItem(QtGui.QStandardItem):
