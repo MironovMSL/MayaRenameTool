@@ -579,7 +579,7 @@ class ButtonSkinClusterType(QtWidgets.QPushButton):
 		else:
 			self.isTypeList.emit(self.TypeList)
 
-		print(self.TypeList)
+
 
 	def SelMesh(self):
 		cmds.select(self.Mesh)
@@ -775,11 +775,11 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 				if shape:
 					shapeType = cmds.nodeType(shape[0])
-					if shapeType == "mesh":
+					if shapeType in ["mesh","nurbsCurve","nurbsSurface"]:
 						geo.append(i)
 						geoshape.append(shape[0])
 
-			elif type == "mesh":
+			elif type in ["mesh","nurbsCurve","nurbsSurface"]:
 				transform = cmds.listRelatives(i, p=True)[0]
 				geo.append(transform)
 				geoshape.append(i)
@@ -852,8 +852,6 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 		else:
 			print("Reuired selection is only one poly mesh !")
-
-
 
 	def setClear(self):
 
@@ -1127,9 +1125,6 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 				if grandChildren:
 					child.appendRows(grandChildren)
 
-		# print("child {}, grandChildren {}".format(child, grandChildren))
-
-	#
 	def selectionChanged(self):
 
 		sel = self.view.selectedIndexes()
