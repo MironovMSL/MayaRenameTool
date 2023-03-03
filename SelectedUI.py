@@ -5,6 +5,7 @@ import os
 import sys
 import json
 
+
 import maya.OpenMaya as om
 import maya.OpenMayaUI as mui
 
@@ -25,6 +26,8 @@ class Buttons_set_name(QtWidgets.QPushButton):
 
 		self._text = text
 		self.listsel = listsel
+
+		self.setObjectName(self._text)
 
 		self.setObjectName(self._text)
 		self.setFixedSize(30, 25)
@@ -99,7 +102,9 @@ class Buttons_set_name(QtWidgets.QPushButton):
 
 	def Creat_Set(self):
 		textname = self.text()
-		set = cmds.sets(n=textname)
+		select   = cmds.select(self.listsel,r=1)
+		set 	 = cmds.sets(n=textname)
+		cmds.select(clear=True)
 
 	def Rename_bnt(self):
 		vis = self.NameLineEdit.isVisible()
@@ -648,6 +653,8 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 	def setupUI(self):
 
+
+
 		self.List_BTN = ListBTN("List")
 
 		self.model = QtGui.QStandardItemModel()
@@ -656,7 +663,7 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		self.view = QtWidgets.QListView()
 		self.view.setModel(self.model)
 		# self.view.header().setVisible(False)
-		self.view.setEditTriggers(self.view.NoEditTriggers)
+		self.view.setEditTriggers(self.view.DoubleClicked)
 		self.view.setSelectionMode(self.view.ExtendedSelection)
 
 		# ---------------------------------
@@ -741,6 +748,68 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 		self.List_BTN.clicked.connect(self.set_list)
 		self.view.selectionModel().selectionChanged.connect(self.selectionChanged)
+		self.model.itemChanged.connect(self.ChangedItems)
+
+
+	def emitRenamTool(self):
+		print("True")
+	def ChangedItems(self, item):
+		sel = self.view.selectedIndexes()
+
+		oldname = self.model.itemFromIndex(sel[0]).fullname
+
+		typeOld = cmds.nodeType(oldname)
+		shapeOld = None
+
+		if typeOld == "transform":
+			shapeOld = cmds.listRelatives(oldname, shapes=1, f = 1)
+
+
+		newname = cmds.rename(self.model.itemFromIndex(sel[0]).fullname, str(item.text()))
+		shapeNew = cmds.listRelatives(newname, shapes=1, f=1)
+
+		self.model.itemFromIndex(sel[0]).editName(newname)
+
+		Count = self.widget_layout.count()
+		if Count:
+			for i in range(Count):
+				WidgetList = self.widget_layout.itemAt(i).widget().TypeList
+
+
+				if oldname in WidgetList:
+					WidgetList[WidgetList.index(oldname)] = newname
+
+				if shapeOld:
+					for enum, i in enumerate(shapeOld):
+						if i in WidgetList:
+							WidgetList[WidgetList.index(i)] = shapeNew[enum]
+
+		if shapeOld:
+			countModel = self.model.rowCount()
+			for index in range(countModel):
+
+				iteminex = self.model.item(index)
+				namefull = iteminex.fullname
+
+				if namefull == shapeOld[0]:
+					self.model.takeRow(index)
+					newItem = DagTreeItem(shapeNew[0])
+					self.model.insertRow(index,newItem)
+					iteminex.EditSgape(shapeNew[0])
+
+		CountSet = self.listscrollArea.scroll_area_widget_layout.count()
+
+		if CountSet:
+			for a in range(Count):
+				WidgetList = self.listscrollArea.scroll_area_widget_layout.itemAt(a).widget().listsel
+
+				if oldname in WidgetList:
+					WidgetList[WidgetList.index(oldname)] = newname
+
+				if shapeOld:
+					for enum, i in enumerate(shapeOld):
+						if i in WidgetList:
+							WidgetList[WidgetList.index(i)] = shapeNew[enum]
 
 	def setupUI_set(self):
 
@@ -1083,6 +1152,9 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		self.List_BTN.set_Count(len(TypeList))
 
 	def set_list(self):
+
+
+
 		Count = self.widget_layout.count()
 		if Count:
 			for i in range(Count):
@@ -1217,18 +1289,34 @@ class DagTreeItem(QtGui.QStandardItem):
 		# self.setIcon((QtGui.QIcon(os.path.join(root_, "icons/tool.svg")),"Edit"))
 
 		# self.setData(self.sortKey, QtCore.Qt.UserRole)
+		# self.setData(self.EditSgape, QtCore.Qt.EditRole)
+
+
 		if self.fullname:
 			self.set_icon()
 
+
+
+
 	def __repr__(self):
 		return "<%s: %s>" % (self.__class__.__name__, self.name)
+
+	def EditSgape(self,newnameShape):
+		self.dagObj = newnameShape
+
+
+
+	def editName(self, newname):
+		self.dagObj = self.parentname + "|" + newname
+		self.setText(self.name)
+		return self.dagObj
 
 	@property
 	def sortKey(self):
 
 		if self.dagObj:
 			self.apiType = self.dagObj.apiType()
-
+			print(self.apiType)
 			dagCopy = om.MDagPath(self.dagObj)
 
 			try:
