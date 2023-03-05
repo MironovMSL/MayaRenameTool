@@ -1393,7 +1393,7 @@ class LibraryName(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 # MayaQWidgetDockableMixin, QtWidgets.QDockWidget
 class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
-	itClickButtonUI  = QtCore.Signal(list, list)
+	itClickButtonUI  = QtCore.Signal(tuple)
 	def __init__(self):
 		super(MSL_RenameTool, self).__init__()
 
@@ -1790,7 +1790,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		print("Reset")
 
 	def Replace(self):
-		self.itClickButtonUI.emit(True)
+		# self.itClickButtonUI.emit(True)
 		ReplaceName = self.replace_Field.text()
 		ListSearchName, state, SearchName = self.get_ListLongName_Search_Replace()
 		sortName = sorted(ListSearchName, key=len, reverse=True)
@@ -1802,6 +1802,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 				cmds.rename(i, NewshortName)
 
 		print("Replace '{}' with '{}' in {} names: {}".format(SearchName, ReplaceName, len(ListSearchName), state))
+
 
 	def Search(self):
 
@@ -1910,6 +1911,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		padding = self.number_padding.value()
 		ListLongName = cmds.ls(selection=1, long=1)
 		ListLongNameOld = ListLongName[:]
+		librname = {"listNameOld":[],"listNameNew":[],"listNameShapOld":[],"listNameShapNew":[]}
 
 		if Name:
 			if Number:
@@ -1917,12 +1919,42 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 					Number = ("0" * (padding - len(str(start)))) + str(start)
 					NewshortName = left_text + Number + right_text
 
+					#//// for signal SelectedUI ////
+					typeOld = cmds.nodeType(i)
+					shapeOld = False
+
+					if typeOld == "transform":
+						shapeOld = cmds.listRelatives(i, shapes=1, f=1)[0]
+
+					#------------------------------------
+
 					NewshortName = cmds.rename(i, NewshortName)
 
-					ListLongName = self.retur_NewNamelongList(ListLongName, i, NewshortName)
+					ListLongName, NewlongName = self.retur_NewNamelongList(ListLongName, i, NewshortName)
 
+					# //// for signal SelectedUI ////
+					typeNew = cmds.nodeType(NewlongName)
+					shapeNew = False
+
+					if typeNew == "transform":
+						shapeNew = cmds.listRelatives(NewlongName, shapes=1, f=1)[0]
+
+
+					librname["listNameOld"].append(i)
+					librname["listNameNew"].append(NewlongName)
+					librname["listNameShapOld"].append(shapeOld)
+					librname["listNameShapNew"].append(shapeNew)
 			else:
 				for index, i in enumerate(ListLongName):
+
+					# //// for signal SelectedUI ////
+					typeOld = cmds.nodeType(i)
+					shapeOld = False
+
+					if typeOld == "transform":
+						shapeOld = cmds.listRelatives(i, shapes=1, f=1)[0]
+
+					# ------------------------------------
 
 					shortName = Name
 					NewLongName_TMP = cmds.rename(i, Name)
@@ -1932,11 +1964,23 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 					if Name != NewshortName:
 						shortName = NewshortName
 
-					ListLongName = self.retur_NewNamelongList(ListLongName, i, shortName)
+					ListLongName, NewlongName = self.retur_NewNamelongList(ListLongName, i, shortName)
+
+					# //// for signal SelectedUI ////
+					typeNew = cmds.nodeType(NewlongName)
+					shapeNew = False
+
+					if typeNew == "transform":
+						shapeNew = cmds.listRelatives(NewlongName, shapes=1, f=1)[0]
+
+					librname["listNameOld"].append(i)
+					librname["listNameNew"].append(NewlongName)
+					librname["listNameShapOld"].append(shapeOld)
+					librname["listNameShapNew"].append(shapeNew)
 
 
-		print(ListLongNameOld,ListLongName)
-		self.itClickButtonUI.emit(True)
+
+		self.itClickButtonUI.emit(librname)
 
 	def get_short_Name(self, longName):
 		shortName = longName.rpartition("|")[-1]
@@ -1960,10 +2004,10 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 
 			ListLongName[num] = i
 
-		return ListLongName
+		return ListLongName, NewLongName
 
 	def remove_First_index(self):
-		self.itClickButtonUI.emit(True)
+		# self.itClickButtonUI.emit(True)
 		Long_Name_sel_Obj = cmds.ls(selection=1, long=1)
 		sortName = sorted(Long_Name_sel_Obj, key=len, reverse=True)
 
@@ -1975,7 +2019,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 			cmds.rename(i, shortName[1:])
 
 	def remove_Last_index(self):
-		self.itClickButtonUI.emit(True)
+		# self.itClickButtonUI.emit(True)
 		Long_Name_sel_Obj = cmds.ls(selection=1, long=1)
 		sortName = sorted(Long_Name_sel_Obj, key=len, reverse=True)
 
@@ -2499,7 +2543,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		self.index_SpinBox.setValue(self.Start_index_Number)
 
 	def prefix_add(self, text):
-		self.itClickButtonUI.emit(True)
+		# self.itClickButtonUI.emit(True)
 		if text:
 			prefix = text
 		else:
@@ -2523,7 +2567,7 @@ class MSL_RenameTool(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 				cmds.rename(i, NewshortName)
 
 	def suffix_add(self, text):
-		self.itClickButtonUI.emit(True)
+		# self.itClickButtonUI.emit(True)
 		if text:
 			suffix = text
 		else:

@@ -751,8 +751,60 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		self.model.itemChanged.connect(self.ChangedItems)
 
 
-	def emitRenamTool(self):
-		print("True")
+	def emitRenamTool(self, librname, ):
+
+		Count      = self.widget_layout.count()
+		countModel = self.model.rowCount()
+		CountSet   = self.listscrollArea.scroll_area_widget_layout.count()
+
+		if librname["listNameOld"]:
+			if countModel:
+				for num, oldname in enumerate(librname["listNameOld"]):
+					for index in range(countModel):
+						itemModel = self.model.item(index)
+						namefull = itemModel.fullname
+
+						if namefull == oldname:
+							self.model.takeRow(index)
+							newItem = DagTreeItem(librname["listNameNew"][num])
+							self.model.insertRow(index, newItem)
+
+							if librname["listNameShapOld"][num]:
+								for indexshape in range(countModel):
+
+									itemshape = self.model.item(indexshape)
+									namefullshape = itemshape.fullname
+
+									if namefullshape == librname["listNameShapOld"][num]:
+										self.model.takeRow(indexshape)
+										newItem = DagTreeItem(librname["listNameShapNew"][num])
+										self.model.insertRow(indexshape, newItem)
+
+
+							if Count:
+								for i in range(Count):
+									WidgetList = self.widget_layout.itemAt(i).widget().TypeList
+
+									if oldname in WidgetList:
+										WidgetList[WidgetList.index(oldname)] = librname["listNameNew"][num]
+
+									if librname["listNameShapOld"][num]:
+										if librname["listNameShapOld"][num] in WidgetList:
+											WidgetList[WidgetList.index(librname["listNameShapOld"][num])] = librname["listNameShapNew"][num]
+
+
+							if CountSet:
+								for a in range(CountSet):
+									WidgetList = self.listscrollArea.scroll_area_widget_layout.itemAt(a).widget().listsel
+
+									if oldname in WidgetList:
+										WidgetList[WidgetList.index(oldname)] = librname["listNameNew"][num]
+
+									if librname["listNameShapOld"][num]:
+
+											if librname["listNameShapOld"][num] in WidgetList:
+												WidgetList[WidgetList.index(librname["listNameShapOld"][num])] = librname["listNameShapNew"][num]
+
 	def ChangedItems(self, item):
 		sel = self.view.selectedIndexes()
 
@@ -795,12 +847,14 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 					self.model.takeRow(index)
 					newItem = DagTreeItem(shapeNew[0])
 					self.model.insertRow(index,newItem)
-					iteminex.EditSgape(shapeNew[0])
+					# iteminex.EditSgape(shapeNew[0])
 
 		CountSet = self.listscrollArea.scroll_area_widget_layout.count()
 
 		if CountSet:
-			for a in range(Count):
+
+			for a in range(CountSet):
+
 				WidgetList = self.listscrollArea.scroll_area_widget_layout.itemAt(a).widget().listsel
 
 				if oldname in WidgetList:
@@ -1202,7 +1256,8 @@ class MSL_Selected(MayaQWidgetBaseMixin, QtWidgets.QDialog):
 		sel = self.view.selectedIndexes()
 		nodes = [self.model.itemFromIndex(i).fullname for i in sel]
 		if nodes:
-			cmds.select(nodes, replace=True)
+			if cmds.objExists(nodes[0]):
+				cmds.select(nodes, replace=True)
 		else:
 			cmds.select(clear=True)
 
@@ -1286,16 +1341,12 @@ class DagTreeItem(QtGui.QStandardItem):
 
 		self.setText(self.name)
 
-		# self.setIcon((QtGui.QIcon(os.path.join(root_, "icons/tool.svg")),"Edit"))
-
 		# self.setData(self.sortKey, QtCore.Qt.UserRole)
 		# self.setData(self.EditSgape, QtCore.Qt.EditRole)
 
 
 		if self.fullname:
 			self.set_icon()
-
-
 
 
 	def __repr__(self):
